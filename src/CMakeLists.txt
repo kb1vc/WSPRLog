@@ -48,3 +48,29 @@ target_link_libraries(WSPRLogSplitter  ${ZLIB_LIBRARIES} ${Boost_LIBRARIES})
 
 install(TARGETS WSPRLogSplitter DESTINATION bin)
 
+
+
+
+set(WSPRLogHisto_SRCS
+    WSPRLog.cxx
+    WSPRLogHisto.cxx
+    )
+
+add_executable(WSPRLogHisto ${WSPRLogHisto_SRCS})
+
+target_link_libraries(WSPRLogHisto  ${ZLIB_LIBRARIES} ${Boost_LIBRARIES})
+
+install(TARGETS WSPRLogHisto DESTINATION bin)
+
+
+set(WSPRLogXY_SRCS
+    WSPRLog.cxx
+    WSPRLogXY.cxx
+    )
+
+add_executable(WSPRLogXY ${WSPRLogXY_SRCS})
+
+target_link_libraries(WSPRLogXY  ${ZLIB_LIBRARIES} ${Boost_LIBRARIES})
+
+install(TARGETS WSPRLogXY DESTINATION bin)
+

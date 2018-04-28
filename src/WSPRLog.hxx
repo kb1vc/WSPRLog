@@ -34,7 +34,17 @@ public:
   enum Field { SPOT, DRIFT, BAND, VERSION, CODE, TXCALL, RXCALL, TXGRID, RXGRID, 
 	       FREQ, DTIME, DIST, SNR, POWER, AZ, FREQ_DIFF, UNDEFINED } ;
 
-  Field str2Field(const std::string & str); 
+  static Field str2Field(const std::string & str); 
+
+  static void printFieldChoices(std::ostream & os) { 
+    os << "One of: "; 
+    int i = 0; 
+    for(auto sel: field_map) {
+      os << sel.first << " ";  
+      i++; 
+      if((i % 6) == 0) os << std::endl; 
+    }
+  }
   
   bool getField(Field sel, unsigned long & val); 
   bool getField(Field sel, double & val); 
@@ -69,7 +79,7 @@ public:
   }
 
 private:
-  void initMaps(); 
+  static void initMaps(); 
   static boost::format * fmt; 
 
   static std::map<std::string, Field> field_map;

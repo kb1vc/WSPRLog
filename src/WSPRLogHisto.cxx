@@ -12,59 +12,42 @@
 #include <math.h>
 #include <set>
 
-// filter based on line frequencies.
-// delete all 0 Hz offset reports.
-// write +/-50 +/-100 Hz to <basename>_50Hz.csv
-// write +/-60 +/-120 Hz to <basename>_60Hz.csv
 class myWSPRLog : public WSPRLog {
 public:
-  myWSPRLog(const std::string outf_base_name) : WSPRLog() {
-    std::string out50_nm = outf_base_name + "_50Hz.csv";
-    std::string out60_nm = outf_base_name + "_60Hz.csv";
-    std::string outDist_nm = outf_base_name + "_D.csv";
-    out50.open(out50_nm);
-    out60.open(out60_nm);
-    outDist.open(outDist_nm);
-
-    int i, j; 
-    for(i = -4; i < 5; i++) {
-      if(i == 0) continue; 
-      for(j = -2; j < 3; j++) {
-	set50.insert(i * 50 + j);
-	set60.insert(i * 60 + j);
-      }
-    }
+  myWSPRLog(WSPRLogEntry::Field _sel) : WSPRLog() {
+    sel = _sel; 
   }
 
-  ~myWSPRLog() { 
-    out50.close();
-    out60.close();
-    outDist.close();
-  }
 
   bool processEntry(WSPRLogEntry * ent) {
-    int fdiff; 
-    if(ent == NULL) return false;
+    int el; 
 
-    ent->getField(WSPRLogEntry::FREQ_DIFF, fdiff); 
+    ent->getField(sel, el); 
+
+    if(histogram.find(el) == histogram.end()) {
+      histogram[el] = 1; 
+    }
+    else {
+      histogram[el] += 1; 
+    }
     
-    if(fdiff == 0) return true; 
-
-    if(set50.find(fdiff) != set50.end()) ent->print(out50);
-    else if(set60.find(fdiff) != set60.end()) ent->print(out60);
-    else ent->print(outDist);     
-
     return true; 
   }
 
+
+  void printHistogram(std::ostream & os) {
+    for(auto he: histogram) {
+      os << he.first << " " << he.second << std::endl; 
+    }
+  }
 private:
-  std::ofstream outDist, out50, out60; 
-  std::set<int> set50, set60; 
+  std::map<int, int> histogram;
+  WSPRLogEntry::Field sel;
 }; 
 
 int main(int argc, char * argv[])
 {
-  std::string in_name, out_base_name;
+  std::string in_name, out_name, field_selector;
   bool input_gzipped; 
   namespace po = boost::program_options;
 
@@ -74,12 +57,14 @@ int main(int argc, char * argv[])
   desc.add_options()
     ("help", "help message")
     ("log", po::value<std::string>(&in_name)->required(), "Input log file (csv) in WSPR log format")
-    ("out_base", po::value<std::string>(&out_base_name)->required(), "Basename for output logs in WSPR log format")
+    ("out", po::value<std::string>(&out_name)->required(), "Histogram table suitable for gnuplot")
+    ("field", po::value<std::string>(&field_selector)->required(), "Numeric field to use for histogram buckets")
     ("igz", po::value<bool>(&input_gzipped)->default_value(false), "if true, input file is gzip compressed");
   
   po::positional_options_description pos_opts ;
   pos_opts.add("log", 1);
-  pos_opts.add("out_base", 1);
+  pos_opts.add("out", 1);
+  pos_opts.add("multi", 1);  
     
   po::variables_map vm; 
 
@@ -109,7 +94,15 @@ int main(int argc, char * argv[])
   }
 
 
-  myWSPRLog wlog(out_base_name);
+  WSPRLogEntry::Field sel; 
+  sel = WSPRLogEntry::str2Field(field_selector); 
+  if(sel == WSPRLogEntry::UNDEFINED) {
+    std::cerr << "Bad field selected.\n";
+    WSPRLogEntry::printFieldChoices(std::cerr); 
+    exit(-1); 
+  }
+
+  myWSPRLog wlog(sel); 
 
   if(input_gzipped) {
     std::ifstream gzfile(in_name, std::ios_base::in | std::ios_base::binary);
@@ -124,7 +117,6 @@ int main(int argc, char * argv[])
     wlog.readLog(inf);
   }
 
-  // call processEntry one last time, to see if we've
-  // got something stuck in the pipeline. 
-  wlog.processEntry(NULL); 
+  std::ofstream ofs(out_name);
+  wlog.printHistogram(ofs);
 }

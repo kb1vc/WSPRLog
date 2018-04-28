@@ -1,14 +1,26 @@
 #!/bin/bash
 # some are prolific two-receiver stations
 fname=$1
-IFS=","
-for tpl in 10.0,10.4,30m 14.0,14.5,20m 7.0,7.5,40m
+basename=$2
+
+# split the file into logs
+WSPRLogSplitter --igz on ${fname} ${basename}
+for bf in ${basename}_*.csv
 do
-    set -- $tpl
-    echo "lo $1  hi $2 band $3"
-    WSPRLogBandFilter --flo $1 --fhi $2 $fname wspr_$3_raw.csv multi_remove_$3.rpt    
-    grep -v -f multi_remove_$3.rpt < wspr_$3_raw.csv > wspr_$3.csv 
+    rfn=`basename ${bf} .csv`
+    echo "processing ${bf}"
+    WSPRLogBandFilter --flo 0.0 --fhi 100e9 ${bf} tmp.csv tmp_remove.lis
+    echo "VR2BG" >> tmp_remove.lis
+    grep -v -f tmp_remove.lis tmp.csv > ${rfn}_img.csv
+    # now generate the splits
+    WSPRLogLineFilter ${rfn}_img.csv ${rfn}_img
+    for bif in ${rfn}_img_*.csv
+    do
+	echo "    ${bif}"
+	hfbn=`basename ${bif} .csv`
+	WSPRLogHisto ${bif} ${hfbn}_FD.hist --field FREQ_DIFF
+	WSPRLogXY ${bif} ${hfbn}_DIST_FD.xydat --x_field FREQ_DIFF --y_field DIST
+    done
 done
-    
 
 

@@ -12,59 +12,38 @@
 #include <math.h>
 #include <set>
 
-// filter based on line frequencies.
-// delete all 0 Hz offset reports.
-// write +/-50 +/-100 Hz to <basename>_50Hz.csv
-// write +/-60 +/-120 Hz to <basename>_60Hz.csv
+// plot distance, azimuth pairs. 
 class myWSPRLog : public WSPRLog {
 public:
-  myWSPRLog(const std::string outf_base_name) : WSPRLog() {
-    std::string out50_nm = outf_base_name + "_50Hz.csv";
-    std::string out60_nm = outf_base_name + "_60Hz.csv";
-    std::string outDist_nm = outf_base_name + "_D.csv";
-    out50.open(out50_nm);
-    out60.open(out60_nm);
-    outDist.open(outDist_nm);
-
-    int i, j; 
-    for(i = -4; i < 5; i++) {
-      if(i == 0) continue; 
-      for(j = -2; j < 3; j++) {
-	set50.insert(i * 50 + j);
-	set60.insert(i * 60 + j);
-      }
-    }
+  myWSPRLog(WSPRLogEntry::Field _xsel, WSPRLogEntry::Field _ysel,
+	    const std::string & out_name) : WSPRLog() {
+    xsel = _xsel; 
+    ysel = _ysel;
+    os.open(out_name);
   }
 
-  ~myWSPRLog() { 
-    out50.close();
-    out60.close();
-    outDist.close();
-  }
 
   bool processEntry(WSPRLogEntry * ent) {
-    int fdiff; 
-    if(ent == NULL) return false;
+    int x, y; 
 
-    ent->getField(WSPRLogEntry::FREQ_DIFF, fdiff); 
-    
-    if(fdiff == 0) return true; 
+    if(ent == NULL) return false; 
 
-    if(set50.find(fdiff) != set50.end()) ent->print(out50);
-    else if(set60.find(fdiff) != set60.end()) ent->print(out60);
-    else ent->print(outDist);     
+    ent->getField(xsel, x);
+    ent->getField(ysel, y);
 
+    os << x << " " << y << std::endl; 
     return true; 
   }
 
+
 private:
-  std::ofstream outDist, out50, out60; 
-  std::set<int> set50, set60; 
+  std::ofstream os;
+  WSPRLogEntry::Field xsel, ysel; 
 }; 
 
 int main(int argc, char * argv[])
 {
-  std::string in_name, out_base_name;
+  std::string in_name, out_name, x_field_selector, y_field_selector;
   bool input_gzipped; 
   namespace po = boost::program_options;
 
@@ -74,21 +53,25 @@ int main(int argc, char * argv[])
   desc.add_options()
     ("help", "help message")
     ("log", po::value<std::string>(&in_name)->required(), "Input log file (csv) in WSPR log format")
-    ("out_base", po::value<std::string>(&out_base_name)->required(), "Basename for output logs in WSPR log format")
+    ("out", po::value<std::string>(&out_name)->required(), "Output data file")
+    ("x_field", po::value<std::string>(&x_field_selector)->required(), "Numeric field to use for x coordinate")
+    ("y_field", po::value<std::string>(&y_field_selector)->required(), "Numeric field to use for y coordinate")
     ("igz", po::value<bool>(&input_gzipped)->default_value(false), "if true, input file is gzip compressed");
   
   po::positional_options_description pos_opts ;
   pos_opts.add("log", 1);
-  pos_opts.add("out_base", 1);
+  pos_opts.add("out", 1);
+
     
   po::variables_map vm; 
 
+  std::string what_am_i("Filter WSPR logs by frequency range\n\t");
   try {
     po::store(po::command_line_parser(argc, argv).options(desc)
 	      .positional(pos_opts).run(), vm);
     
     if(vm.count("help")) {
-      std::cout << "Filter WSPR logs by frequency range\n\t"
+      std::cout << what_am_i
 		<< desc << std::endl; 
       exit(-1);
     }
@@ -109,7 +92,17 @@ int main(int argc, char * argv[])
   }
 
 
-  myWSPRLog wlog(out_base_name);
+  WSPRLogEntry::Field xsel, ysel;
+
+  xsel = WSPRLogEntry::str2Field(x_field_selector);
+  ysel = WSPRLogEntry::str2Field(y_field_selector);   
+  if((xsel == WSPRLogEntry::UNDEFINED) || (ysel == WSPRLogEntry::UNDEFINED)) {
+    std::cerr << "Bad field selected [" << x_field_selector << "," << y_field_selector << "]\n";
+    WSPRLogEntry::printFieldChoices(std::cerr); 
+    exit(-1); 
+  }
+
+  myWSPRLog wlog(xsel, ysel, out_name); 
 
   if(input_gzipped) {
     std::ifstream gzfile(in_name, std::ios_base::in | std::ios_base::binary);
@@ -123,8 +116,4 @@ int main(int argc, char * argv[])
     std::ifstream inf(in_name);
     wlog.readLog(inf);
   }
-
-  // call processEntry one last time, to see if we've
-  // got something stuck in the pipeline. 
-  wlog.processEntry(NULL); 
 }

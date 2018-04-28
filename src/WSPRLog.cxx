@@ -36,7 +36,7 @@ WSPRLogEntry::WSPRLogEntry(const std::string line)
   std::vector<std::string> logent;
 
   if(fmt == NULL) {
-    fmt = new boost::format("%d,%ld,%s,%s,%f,%12.6f,%s,%s,%f,%f,%f,%f,%d,%s,%d,%d\n");
+    fmt = new boost::format("%d,%ld,%s,%s,%4.1f,%12.6f,%s,%s,%3.0f,%3.1f,%6f,%3f,%d,%s,%d,%d\n");
   }
 
   boost::algorithm::split(logent, line, boost::is_any_of(","));
@@ -143,6 +143,8 @@ WSPRLogEntry * WSPRLogEntry::get(std::istream & is)
 
 WSPRLogEntry::Field WSPRLogEntry::str2Field(const std::string & str)
 {
+  if(field_map.size() == 0) initMaps();
+
   if(field_map.find(str) == field_map.end()) return UNDEFINED;
   else return field_map[str]; 
 }
@@ -272,11 +274,45 @@ bool WSPRLogEntry::getField(WSPRLogEntry::Field sel, double & val)
 bool WSPRLogEntry::getField(WSPRLogEntry::Field sel, int & val)
 {
 
-  if(sel == FREQ_DIFF) {
-    val = freq_diff; 
-    return true; 
-  }
+  switch (sel) {
+  case WSPRLogEntry::SPOT:
+  case WSPRLogEntry::BAND:
+  case WSPRLogEntry::CODE:
+  case WSPRLogEntry::DTIME:
 
-  return false; 
+  case WSPRLogEntry::VERSION:
+  case WSPRLogEntry::TXCALL:
+  case WSPRLogEntry::RXCALL:
+  case WSPRLogEntry::TXGRID:
+  case WSPRLogEntry::RXGRID:
+    return false; 
+    break; 
+
+  case WSPRLogEntry::DRIFT:
+    val = (int) drift;
+    break; 
+  case WSPRLogEntry::FREQ:
+    val = (int) freq; 
+    break; 
+  case WSPRLogEntry::DIST:
+    val = (int) dist; 
+    break; 
+  case WSPRLogEntry::SNR:
+    val = (int) snr; 
+    break; 
+  case WSPRLogEntry::POWER:
+    val = (int) power; 
+    break; 
+  case WSPRLogEntry::AZ:
+    val = (int) az; 
+    break; 
+  case WSPRLogEntry::FREQ_DIFF:
+    val = freq_diff; 
+    break; 
+  default: 
+    return false;
+    break; 
+  }
+  return true; 
 }
 

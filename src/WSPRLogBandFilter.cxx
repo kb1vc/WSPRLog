@@ -69,10 +69,16 @@ public:
 	if(repcounts.find(fle->rxcall) == repcounts.end()) repcounts[fle->rxcall] = 1; 
 	else repcounts[fle->rxcall] += 1; 
 
+	// skip reports where every entry is on exactly the same frequency.
+	int printed_count = 0; 
 	for(auto & le : mapent.second) {
 	  le->calcDiff(fle); 
-	  le->print(out); 
+	  if(le->freq_diff != 0.0) {
+	    le->print(out); 
+	    printed_count++; 
+	  }
 	}
+	if(printed_count > 0) fle->print(out);
       }
     }
 
@@ -166,8 +172,6 @@ int main(int argc, char * argv[])
 	      << desc << std::endl;
     exit(-1);        
   }
-
-  std::cerr << boost::format("infile: [%s] outfile: [%s] f_lo = %g f_hi = %g\n") % in_name % out_name % lo_freq % hi_freq; 
 
   myWSPRLog wlog(out_name, lo_freq, hi_freq);
 
