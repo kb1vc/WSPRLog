@@ -63,16 +63,14 @@ public:
 	// two or more reports for the same station pair. 	
 	mapent.second.sort(WSPRLogEntry::compareSNR); 
 	WSPRLogEntry * fle = mapent.second.front();
-	fle->calcDiff(*fle);
+	fle->calcDiff(fle);
 
 	// remember the reporting station
 	if(repcounts.find(fle->rxcall) == repcounts.end()) repcounts[fle->rxcall] = 1; 
 	else repcounts[fle->rxcall] += 1; 
 
-	std::string prefix = (boost::format("tx: %10s %6s time: %ld  dist: %d  pwr: %g ") 
-			      % fle->txcall % fle->txgrid % fle->dtime % fle->dist % fle->power).str();
 	for(auto & le : mapent.second) {
-	  le->calcDiff(*fle); 
+	  le->calcDiff(fle); 
 	  le->print(out); 
 	}
       }

@@ -5,8 +5,10 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
+#include <iomanip>
 
 std::map<std::string, WSPRLogEntry::Field> WSPRLogEntry::field_map;
+boost::format * WSPRLogEntry::fmt = NULL; 
 
 void WSPRLogEntry::initMaps() {
   if(field_map.size() != 0) return; 
@@ -33,6 +35,10 @@ WSPRLogEntry::WSPRLogEntry(const std::string line)
 {
   std::vector<std::string> logent;
 
+  if(fmt == NULL) {
+    fmt = new boost::format("%d,%ld,%s,%s,%f,%12.6f,%s,%s,%f,%f,%f,%f,%d,%s,%d,%d\n");
+  }
+
   boost::algorithm::split(logent, line, boost::is_any_of(","));
 
   // just in case.  
@@ -58,7 +64,7 @@ WSPRLogEntry::WSPRLogEntry(const std::string line)
   }
   else code = 0; 
   if (logent.size() > 15) {
-    freq_diff = std::stod(logent[15]);
+    freq_diff = std::stoi(logent[15]);
   }
   else freq_diff = 0; 
 }
@@ -89,8 +95,14 @@ std::ostream &  WSPRLogEntry::print(std::ostream & os)
 {
   std::string ver = version; 
   if(version == "") ver = "UNKNOWN";
-  
-  os << boost::format("%d,%ld,%s,%s,%f,%12.6f,%s,%s,%f,%f,%f,%f,%d,%s,%d,%4.0f\n")
+
+#if 0  
+  os << spot_id << "," << dtime << "," << rxcall << "," << rxgrid 
+     << "," << snr << "," 
+     << std::setw(12)  << std::setprecision(6) << freq 
+     << "," << txcall << "," << txgrid << "," << power << "," << drift << "," << dist << "," << az << "," << band << "," << ver << "," << code << "," << freq_diff << std::endl; 
+#else
+  os << *fmt
     % spot_id
     % dtime
     % rxcall
@@ -107,7 +119,8 @@ std::ostream &  WSPRLogEntry::print(std::ostream & os)
     % ver
     % code
     % freq_diff;
-
+#endif
+  
   return os;     
 }
 
@@ -247,14 +260,23 @@ bool WSPRLogEntry::getField(WSPRLogEntry::Field sel, double & val)
   case WSPRLogEntry::AZ:
     val = az; 
     break; 
-  case WSPRLogEntry::FREQ_DIFF:
-    val = freq_diff; 
-    break; 
 
   default: 
     return false;
     break; 
   }
   return true; 
+}
+
+
+bool WSPRLogEntry::getField(WSPRLogEntry::Field sel, int & val)
+{
+
+  if(sel == FREQ_DIFF) {
+    val = freq_diff; 
+    return true; 
+  }
+
+  return false; 
 }
 

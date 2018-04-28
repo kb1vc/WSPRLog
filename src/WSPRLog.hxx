@@ -8,6 +8,7 @@
 #include <iostream>
 #include <boost/format.hpp>
 #include <fstream>
+#include <cmath>
 
 class WSPRLogEntry {
 public: 
@@ -28,7 +29,7 @@ public:
   float snr; 
   float power;
   float az; 
-  double freq_diff; 
+  int freq_diff; 
 
   enum Field { SPOT, DRIFT, BAND, VERSION, CODE, TXCALL, RXCALL, TXGRID, RXGRID, 
 	       FREQ, DTIME, DIST, SNR, POWER, AZ, FREQ_DIFF, UNDEFINED } ;
@@ -37,10 +38,16 @@ public:
   
   bool getField(Field sel, unsigned long & val); 
   bool getField(Field sel, double & val); 
-  bool getField(Field sel, std::string & val); 
+  bool getField(Field sel, std::string & val);
+  bool getField(Field sel, int & val);   
   
   
-  void calcDiff(const WSPRLogEntry & ot) { freq_diff = 1e6*(freq - ot.freq); }
+  void calcDiff(const WSPRLogEntry * ot) { 
+    freq_diff = (int) floor(1e6*(freq - ot->freq)); 
+    if(this != ot) {
+      power = power - ot->power; 
+    }
+  }
 
   std::ostream & print(std::ostream & os);
 
@@ -63,6 +70,7 @@ public:
 
 private:
   void initMaps(); 
+  static boost::format * fmt; 
 
   static std::map<std::string, Field> field_map;
 }; 

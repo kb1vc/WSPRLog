@@ -23,3 +23,28 @@ target_link_libraries(WSPRLogBandFilter  ${ZLIB_LIBRARIES} ${Boost_LIBRARIES})
 install(TARGETS WSPRLogBandFilter DESTINATION bin)
 
 
+
+set(WSPRLogLineFilter_SRCS
+    WSPRLog.cxx
+    WSPRLogLineFilter.cxx
+    )
+
+add_executable(WSPRLogLineFilter ${WSPRLogLineFilter_SRCS})
+
+target_link_libraries(WSPRLogLineFilter  ${ZLIB_LIBRARIES} ${Boost_LIBRARIES})
+
+install(TARGETS WSPRLogLineFilter DESTINATION bin)
+
+
+
+set(WSPRLogSplitter_SRCS
+    WSPRLog.cxx
+    WSPRLogSplitter.cxx
+    )
+
+add_executable(WSPRLogSplitter ${WSPRLogSplitter_SRCS})
+
+target_link_libraries(WSPRLogSplitter  ${ZLIB_LIBRARIES} ${Boost_LIBRARIES})
+
+install(TARGETS WSPRLogSplitter DESTINATION bin)
+

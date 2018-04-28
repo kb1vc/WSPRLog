@@ -52,13 +52,13 @@ public:
 	double base_freq = mapent.second.front()->freq; 
 	// two reporters in the same segment
 	WSPRLogEntry * fle = mapent.second.front();
-	fle->calcDiff(*fle);
+	fle->calcDiff(fle);
 	std::cout << "\n";
 	
 	std::string prefix = (boost::format("tx: %10s %6s time: %ld  dist: %d  pwr: %g ") 
 			      % fle->txcall % fle->txgrid % fle->dtime % fle->dist % fle->power).str();
 	for(auto & le : mapent.second) {
-	  le->calcDiff(*fle); 
+	  le->calcDiff(fle); 
 	  double fdiff = 0.0;
 	  le->getField(WSPRLogEntry::DRIFT, fdiff);
 	  addToHistogram((int) floor(fdiff * 1e6 + 0.5)); 
