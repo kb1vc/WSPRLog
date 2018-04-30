@@ -91,6 +91,7 @@ public:
   WSPRLog(); 
 
   void readLog(std::istream & in); 
+  void readLog(std::string infname, bool is_gzipped = false); 
 
   /// use this for filtering by some property (like a field value)
   virtual bool isKeeper(WSPRLogEntry * ent) { return true; }

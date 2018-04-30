@@ -9,9 +9,9 @@ for bf in ${basename}_*.csv
 do
     rfn=`basename ${bf} .csv`
     echo "processing ${bf}"
-    WSPRLogBandFilter --flo 0.0 --fhi 100e9 ${bf} tmp.csv tmp_remove.lis
+    WSPRLogBandFilter --flo 0.0 --fhi 100e9 ${bf} ${rfn}_pre.csv tmp_remove.lis
     echo "VR2BG" >> tmp_remove.lis
-    grep -v -f tmp_remove.lis tmp.csv > ${rfn}_img.csv
+    grep -v -f tmp_remove.lis ${rfn}_pre.csv > ${rfn}_img.csv
     # now generate the splits
     WSPRLogLineFilter ${rfn}_img.csv ${rfn}_img
     for bif in ${rfn}_img_*.csv

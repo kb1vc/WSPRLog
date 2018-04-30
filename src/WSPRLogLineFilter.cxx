@@ -2,9 +2,6 @@
 
 #include <boost/format.hpp>
 #include <boost/program_options.hpp>
-#include <boost/iostreams/filtering_streambuf.hpp>
-#include <boost/iostreams/copy.hpp>
-#include <boost/iostreams/filter/gzip.hpp>
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -111,19 +108,8 @@ int main(int argc, char * argv[])
 
   myWSPRLog wlog(out_base_name);
 
-  if(input_gzipped) {
-    std::ifstream gzfile(in_name, std::ios_base::in | std::ios_base::binary);
-    boost::iostreams::filtering_streambuf<boost::iostreams::input> inbuf; 
-    inbuf.push(boost::iostreams::gzip_decompressor());
-    inbuf.push(gzfile);
-    std::istream inf(&inbuf);
-    wlog.readLog(inf);
-  }
-  else {
-    std::ifstream inf(in_name);
-    wlog.readLog(inf);
-  }
-
+  wlog.readLog(in_name, input_gzipped);
+  
   // call processEntry one last time, to see if we've
   // got something stuck in the pipeline. 
   wlog.processEntry(NULL); 

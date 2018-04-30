@@ -2,14 +2,19 @@
 
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/iostreams/filtering_streambuf.hpp>
+#include <boost/iostreams/copy.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
+
 #include <vector>
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#pragma message "COMPILING AGAIN! " __FILE__ "..." 
 
 std::map<std::string, WSPRLogEntry::Field> WSPRLogEntry::field_map;
 boost::format * WSPRLogEntry::fmt = NULL; 
-
+ 
 void WSPRLogEntry::initMaps() {
   if(field_map.size() != 0) return; 
   
@@ -316,3 +321,28 @@ bool WSPRLogEntry::getField(WSPRLogEntry::Field sel, int & val)
   return true; 
 }
 
+void WSPRLog::readLog(std::string infname, bool is_gzipped)
+{
+  if(is_gzipped) {
+    std::ifstream gzfile(infname, std::ios_base::in | std::ios_base::binary);
+    boost::iostreams::filtering_streambuf<boost::iostreams::input> inbuf;
+    if(!gzfile.good()) {
+      std::cerr << boost::format("Could not open input file [%s] for reading.\n") % infname; 
+    }
+     
+    inbuf.push(boost::iostreams::gzip_decompressor());
+    inbuf.push(gzfile);
+    std::istream inf(&inbuf);
+    readLog(inf);
+    gzfile.close();
+  }
+  else {
+    std::ifstream inf(infname);
+    if(!inf.good()) {
+      std::cerr << boost::format("Could not open input file [%s] for reading.\n") % infname; 
+    }
+    readLog(inf);
+    inf.close();
+  }
+}
+ 

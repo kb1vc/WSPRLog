@@ -2,9 +2,7 @@
 
 #include <boost/format.hpp>
 #include <boost/program_options.hpp>
-#include <boost/iostreams/filtering_streambuf.hpp>
-#include <boost/iostreams/copy.hpp>
-#include <boost/iostreams/filter/gzip.hpp>
+#include <boost/filesystem.hpp>
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -63,22 +61,29 @@ public:
 	// two or more reports for the same station pair. 	
 	mapent.second.sort(WSPRLogEntry::compareSNR); 
 	WSPRLogEntry * fle = mapent.second.front();
-	fle->calcDiff(fle);
+	// don't do this -- 0 offset has the info... fle->calcDiff(fle);
 
 	// remember the reporting station
 	if(repcounts.find(fle->rxcall) == repcounts.end()) repcounts[fle->rxcall] = 1; 
 	else repcounts[fle->rxcall] += 1; 
 
+	addToCount(total_pair_reports, mapent.first);
+
 	// skip reports where every entry is on exactly the same frequency.
 	int printed_count = 0; 
 	for(auto & le : mapent.second) {
-	  le->calcDiff(fle); 
+	  if(le != fle) le->calcDiff(fle); 
 	  if(le->freq_diff != 0.0) {
 	    le->print(out); 
 	    printed_count++; 
 	  }
 	}
-	if(printed_count > 0) fle->print(out);
+	if(printed_count > 0) {
+	  fle->print(out);
+	  addToCount(img_rx_reports, fle->rxcall, printed_count);
+	  addToCount(img_tx_reports, fle->txcall, printed_count);
+	  addToCount(img_pair_reports, mapent.first, printed_count);
+	}
       }
     }
 
@@ -88,6 +93,15 @@ public:
       if(repent.second > rx_suspect_threshold) {
 	multi_rx_reporters.insert(repent.first);
       }
+    }
+  }
+
+  void addToCount(std::map<std::string, int> & reps, const std::string & k, int count = 1) {
+    if(reps.find(k) != reps.end()) {
+      reps[k] += count; 
+    }
+    else {
+      reps[k] = count; 
     }
   }
 
@@ -105,6 +119,10 @@ public:
   void addEntry(WSPRLogEntry * ent) {
     std::string key = ent->txcall + "," + ent->rxcall; 
     pair_map[key].push_back(ent); 
+    // record the number of reports for each call
+    addToCount(total_rx_reports, ent->rxcall);
+    addToCount(total_tx_reports, ent->txcall);
+    addToCount(total_pair_reports, key);
   }
 
 
@@ -113,10 +131,35 @@ public:
       os << se << std::endl; 
     }
   }
+
+  void dumpReportCounts(const std::string & ofn) {
+    std::string bn = boost::filesystem::basename(ofn); 
+    dumpRC(total_rx_reports, img_rx_reports, bn + "_rx.prop");
+    dumpRC(total_tx_reports, img_tx_reports, bn + "_tx.prop");
+    dumpRC(total_pair_reports, img_pair_reports, bn + "_pair.prop");    
+  }
+
+  void dumpRC(std::map<std::string, int> & tots,
+	      std::map<std::string, int> & imgs,
+	      const std::string & fn) {
+    std::ofstream os(fn);
+    for(auto tp: tots) {
+      if(imgs.find(tp.first) != imgs.end()) {
+	int tot = tots[tp.first];
+	int img = imgs[tp.first]; 
+	float prop = ((float) img)/((float) tot);
+	os << tp.first << " " << tot << " " << img << " " << prop << std::endl;
+      }
+    }
+    os.close();
+  }
 private:
   std::ofstream out; 
   unsigned long last_time; 
   std::map<std::string, std::list<WSPRLogEntry *> > pair_map; 
+
+  std::map<std::string, int> total_rx_reports, total_tx_reports, total_pair_reports;
+  std::map<std::string, int> img_rx_reports, img_tx_reports, img_pair_reports; 
   double f_lo, f_hi; 
   std::set<std::string> multi_rx_reporters; 
   int rx_suspect_threshold; 
@@ -175,23 +218,14 @@ int main(int argc, char * argv[])
 
   myWSPRLog wlog(out_name, lo_freq, hi_freq);
 
-  if(input_gzipped) {
-    std::ifstream gzfile(in_name, std::ios_base::in | std::ios_base::binary);
-    boost::iostreams::filtering_streambuf<boost::iostreams::input> inbuf; 
-    inbuf.push(boost::iostreams::gzip_decompressor());
-    inbuf.push(gzfile);
-    std::istream inf(&inbuf);
-    wlog.readLog(inf);
-  }
-  else {
-    std::ifstream inf(in_name);
-    wlog.readLog(inf);
-  }
-
+  wlog.readLog(in_name, input_gzipped);
+  
   // call processEntry one last time, to see if we've
   // got something stuck in the pipeline. 
   wlog.processEntry(NULL); 
 
   std::ofstream rep(multi_name);
   wlog.dumpMultiRx(rep);
+
+  wlog.dumpReportCounts(out_name); 
 }

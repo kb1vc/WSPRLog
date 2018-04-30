@@ -104,16 +104,5 @@ int main(int argc, char * argv[])
 
   myWSPRLog wlog(xsel, ysel, out_name); 
 
-  if(input_gzipped) {
-    std::ifstream gzfile(in_name, std::ios_base::in | std::ios_base::binary);
-    boost::iostreams::filtering_streambuf<boost::iostreams::input> inbuf; 
-    inbuf.push(boost::iostreams::gzip_decompressor());
-    inbuf.push(gzfile);
-    std::istream inf(&inbuf);
-    wlog.readLog(inf);
-  }
-  else {
-    std::ifstream inf(in_name);
-    wlog.readLog(inf);
-  }
+  wlog.readLog(in_name, input_gzipped);
 }

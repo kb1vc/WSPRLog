@@ -72,4 +72,5 @@ FIND_PACKAGE(ZLIB)
 
 # This is the radio interface... 
 ADD_SUBDIRECTORY(src)
+ADD_SUBDIRECTORY(scripts)
 
