@@ -12,7 +12,7 @@
 
 class WSPRLogEntry {
 public: 
-  WSPRLogEntry(const std::string line); 
+  WSPRLogEntry(const std::string & line); 
   
   unsigned long spot_id; 
   float drift;
@@ -27,12 +27,13 @@ public:
   unsigned long dtime; // time since epoch in seconds. 
   float dist; // length of path
   float snr; 
+  float main_snr; // If this is an image, snr reported by the "zero offset" entry
   float power;
   float az; 
   int freq_diff; 
 
   enum Field { SPOT, DRIFT, BAND, VERSION, CODE, TXCALL, RXCALL, TXGRID, RXGRID, 
-	       FREQ, DTIME, DIST, SNR, POWER, AZ, FREQ_DIFF, UNDEFINED } ;
+	       FREQ, DTIME, DIST, SNR, POWER, AZ, FREQ_DIFF, MAINSNR, UNDEFINED } ;
 
   static Field str2Field(const std::string & str); 
 
@@ -55,7 +56,8 @@ public:
   void calcDiff(const WSPRLogEntry * ot) { 
     freq_diff = (int) floor(1e6*(freq - ot->freq)); 
     if(this != ot) {
-      power = power - ot->power; 
+      snr = snr - ot->snr; 
+      main_snr = ot->snr;
     }
   }
 

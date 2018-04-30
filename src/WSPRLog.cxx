@@ -10,7 +10,7 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
-#pragma message "COMPILING AGAIN! " __FILE__ "..." 
+#pragma message "BUILDING WSPRLog.cxx"
 
 std::map<std::string, WSPRLogEntry::Field> WSPRLogEntry::field_map;
 boost::format * WSPRLogEntry::fmt = NULL; 
@@ -31,17 +31,19 @@ void WSPRLogEntry::initMaps() {
   field_map["DTIME"] = WSPRLogEntry::DTIME;
   field_map["DIST"] = WSPRLogEntry::DIST;
   field_map["SNR"] = WSPRLogEntry::SNR;
+  field_map["MAINSNR"] = WSPRLogEntry::MAINSNR;    
   field_map["POWER"] = WSPRLogEntry::POWER;
   field_map["AZ"] = WSPRLogEntry::AZ;
   field_map["FREQ_DIFF"] = WSPRLogEntry::FREQ_DIFF;
 }
 
-WSPRLogEntry::WSPRLogEntry(const std::string line)
+WSPRLogEntry::WSPRLogEntry(const std::string & line)
 {
   std::vector<std::string> logent;
-
+  std::vector<std::string> snrvec;
+  
   if(fmt == NULL) {
-    fmt = new boost::format("%d,%ld,%s,%s,%4.1f,%12.6f,%s,%s,%3.0f,%3.1f,%6f,%3f,%d,%s,%d,%d\n");
+    fmt = new boost::format("%d,%ld,%s,%s,%4.1f|%4.1f,%12.6f,%s,%s,%3.0f,%3.1f,%6f,%3f,%d,%s,%d,%d\n");
   }
 
   boost::algorithm::split(logent, line, boost::is_any_of(","));
@@ -54,11 +56,21 @@ WSPRLogEntry::WSPRLogEntry(const std::string line)
   dtime = std::stoul(logent[1]);
   rxcall = boost::algorithm::trim_copy(logent[2]);
   rxgrid = boost::algorithm::trim_copy(logent[3]);
-  snr = std::stof(logent[4]);
+  boost::algorithm::split(snrvec, logent[4], boost::is_any_of("|"));
+  if(snrvec.size() > 1) {
+    snr = std::stof(snrvec[0]);
+    main_snr = std::stof(snrvec[1]);            
+  }
+  else {
+    snr = std::stof(logent[4]);
+    main_snr = snr; 
+  }
   freq = std::stod(logent[5]);
   txcall = boost::algorithm::trim_copy(logent[6]); 
   txgrid = boost::algorithm::trim_copy(logent[7]);
-  power = std::stof(logent[8]);
+  
+  power = std::stof(logent[8]);    
+
   drift = std::stof(logent[9]);
   dist = std::stof(logent[10]);
   az = std::stof(logent[11]);
@@ -101,18 +113,13 @@ std::ostream &  WSPRLogEntry::print(std::ostream & os)
   std::string ver = version; 
   if(version == "") ver = "UNKNOWN";
 
-#if 0  
-  os << spot_id << "," << dtime << "," << rxcall << "," << rxgrid 
-     << "," << snr << "," 
-     << std::setw(12)  << std::setprecision(6) << freq 
-     << "," << txcall << "," << txgrid << "," << power << "," << drift << "," << dist << "," << az << "," << band << "," << ver << "," << code << "," << freq_diff << std::endl; 
-#else
   os << *fmt
     % spot_id
     % dtime
     % rxcall
     % rxgrid
     % snr
+    % main_snr
     % freq
     % txcall
     % txgrid
@@ -124,7 +131,6 @@ std::ostream &  WSPRLogEntry::print(std::ostream & os)
     % ver
     % code
     % freq_diff;
-#endif
   
   return os;     
 }
@@ -139,9 +145,8 @@ WSPRLogEntry * WSPRLogEntry::get(std::istream & is)
     if(line == "") continue;
     
     auto * ret = new WSPRLogEntry(line); 
-  
     return ret; 
-  }
+  } 
 
   return NULL;
 }
@@ -181,6 +186,7 @@ bool WSPRLogEntry::getField(WSPRLogEntry::Field sel, unsigned long & val)
   case WSPRLogEntry::FREQ:
   case WSPRLogEntry::DIST:
   case WSPRLogEntry::SNR:
+  case WSPRLogEntry::MAINSNR:    
   case WSPRLogEntry::POWER:
   case WSPRLogEntry::AZ:
   case WSPRLogEntry::FREQ_DIFF:
@@ -222,6 +228,7 @@ bool WSPRLogEntry::getField(WSPRLogEntry::Field sel, std::string & val)
   case WSPRLogEntry::FREQ:
   case WSPRLogEntry::DIST:
   case WSPRLogEntry::SNR:
+  case WSPRLogEntry::MAINSNR:    
   case WSPRLogEntry::POWER:
   case WSPRLogEntry::AZ:
   case WSPRLogEntry::FREQ_DIFF:
@@ -260,6 +267,9 @@ bool WSPRLogEntry::getField(WSPRLogEntry::Field sel, double & val)
     break; 
   case WSPRLogEntry::SNR:
     val = snr; 
+    break; 
+  case WSPRLogEntry::MAINSNR:
+    val = main_snr; 
     break; 
   case WSPRLogEntry::POWER:
     val = power; 
@@ -304,6 +314,9 @@ bool WSPRLogEntry::getField(WSPRLogEntry::Field sel, int & val)
     break; 
   case WSPRLogEntry::SNR:
     val = (int) snr; 
+    break; 
+  case WSPRLogEntry::MAINSNR:
+    val = (int) main_snr; 
     break; 
   case WSPRLogEntry::POWER:
     val = (int) power; 

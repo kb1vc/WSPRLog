@@ -62,7 +62,8 @@ public:
 	mapent.second.sort(WSPRLogEntry::compareSNR); 
 	WSPRLogEntry * fle = mapent.second.front();
 	// don't do this -- 0 offset has the info... fle->calcDiff(fle);
-
+	fle->main_snr = fle->snr;
+	
 	// remember the reporting station
 	if(repcounts.find(fle->rxcall) == repcounts.end()) repcounts[fle->rxcall] = 1; 
 	else repcounts[fle->rxcall] += 1; 
