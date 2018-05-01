@@ -2,7 +2,9 @@ include_directories(SYSTEM ${Boost_INCLUDE_DIRS} )
 
 set(WSPRLogLib_SRCS 
   WSPRLog.cxx
-  TimeCorr.cxx)
+  TimeCorr.cxx
+  ChiSquared.cxx
+  )
 
 add_library(WSPRLogLib ${WSPRLogLib_SRCS})
 
@@ -84,3 +86,27 @@ target_link_libraries(WSPRLogDiffTime  WSPRLogLib
 	${ZLIB_LIBRARIES} ${Boost_LIBRARIES})
 
 install(TARGETS WSPRLogDiffTime DESTINATION bin)
+
+
+set(ChiSquaredTest_SRCS
+  ChiSquaredTest.cxx
+  )
+
+add_executable(ChiSquaredTest ${ChiSquaredTest_SRCS})
+ 
+target_link_libraries(ChiSquaredTest WSPRLogLib
+	 ${Boost_LIBRARIES})
+
+install(TARGETS ChiSquaredTest DESTINATION bin)
+
+
+set(WSPRLogTimeHisto_SRCS
+    WSPRLogTimeHisto.cxx
+    )
+
+add_executable(WSPRLogTimeHisto ${WSPRLogTimeHisto_SRCS})
+
+target_link_libraries(WSPRLogTimeHisto  WSPRLogLib 
+	${ZLIB_LIBRARIES} ${Boost_LIBRARIES})
+
+install(TARGETS WSPRLogTimeHisto DESTINATION bin)
