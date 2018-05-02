@@ -32,12 +32,20 @@ double ChiSquared::pearsonCTS(const std::vector<int> & S,
     p.push_back(v * rtsamps);
   }
 
-  double X2 = 0.0; 
+  // check
+  double sum_c = 0.0; 
+  for(double pi: p) {
+    sum_c += pi; 
+  }
+  std::cerr << "sum_c = " << sum_c << " (1-sum_c) = " << (1.0 - sum_c) << std::endl; 
+
+  double X2 = -1.0 * ((double) N);
+  
   for(int i = 0; i < S.size(); i++) {
     double m = N * p[i]; 
-    double diff = ((double) X[i]) - m;
-    double a = diff * diff / m;
-    X2 += a; 
+    double xi = ((double) X[i]); 
+    
+    X2 += (xi * xi / m); 
   }
 
   return X2; 

@@ -4,6 +4,7 @@ set(WSPRLogLib_SRCS
   WSPRLog.cxx
   TimeCorr.cxx
   ChiSquared.cxx
+  KolmogorovSmirnov.cxx
   )
 
 add_library(WSPRLogLib ${WSPRLogLib_SRCS})
@@ -110,3 +111,27 @@ target_link_libraries(WSPRLogTimeHisto  WSPRLogLib
 	${ZLIB_LIBRARIES} ${Boost_LIBRARIES})
 
 install(TARGETS WSPRLogTimeHisto DESTINATION bin)
+
+
+set(KSTest_SRCS
+  KSTest.cxx
+  )
+
+add_executable(KSTest ${KSTest_SRCS})
+ 
+target_link_libraries(KSTest WSPRLogLib
+	 ${Boost_LIBRARIES})
+
+install(TARGETS KSTest DESTINATION bin)
+
+
+set(HistoStats_SRCS
+  HistoStats.cxx
+  )
+
+add_executable(HistoStats ${HistoStats_SRCS})
+ 
+target_link_libraries(HistoStats 
+	 ${Boost_LIBRARIES})
+
+install(TARGETS HistoStats DESTINATION bin)
