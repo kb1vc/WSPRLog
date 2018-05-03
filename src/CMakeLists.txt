@@ -5,6 +5,7 @@ set(WSPRLogLib_SRCS
   TimeCorr.cxx
   ChiSquared.cxx
   KolmogorovSmirnov.cxx
+  SolarTime.cxx
   )
 
 add_library(WSPRLogLib ${WSPRLogLib_SRCS})
@@ -135,3 +136,14 @@ target_link_libraries(HistoStats
 	 ${Boost_LIBRARIES})
 
 install(TARGETS HistoStats DESTINATION bin)
+
+set(BayesTest_SRCS
+  BayesTest.cxx
+  )
+
+add_executable(BayesTest ${BayesTest_SRCS})
+ 
+target_link_libraries(BayesTest WSPRLogLib
+	 ${Boost_LIBRARIES})
+
+install(TARGETS BayesTest DESTINATION bin)

@@ -1,5 +1,5 @@
 #include "WSPRLog.hxx"
-#include "TimeCorr.hxx"
+#include "SolarTime.hxx"
 #include <boost/format.hpp>
 #include <boost/program_options.hpp>
 #include <string>
@@ -15,12 +15,10 @@ public:
   myWSPRLog(const std::string & out_base_name) : WSPRLog() {
     osrx.open(out_base_name + "_TH_rx.dat");
     ostx.open(out_base_name + "_TH_tx.dat");
-    ostxrx.open(out_base_name + "_TH_txrx.dat");    
     
     for(int i = 0; i < 24; i++) {
 	rxhisto[i] = 0;
 	txhisto[i] = 0;
-	txrxhisto[i] = 0; 	
     }
   }
 
@@ -41,13 +39,11 @@ public:
     et = ent->dtime; 
 
     // calculate the "local time" for to, from, and midpath
-    float fto = TimeCorr::localTime(from, et);
-    float tto = TimeCorr::localTime(to,  et);
-    float mto = TimeCorr::localTime(from, to,  et);
+    SolarTime tx_time(et, from);
+    SolarTime rx_time(et, to);     
 
-    makeEntry(rxhisto, tto);
-    makeEntry(txhisto, fto);
-    makeEntry(txrxhisto, mto);
+    makeEntry(rxhisto, rx_time.getFHour());
+    makeEntry(txhisto, tx_time.getFHour());
 
     delete ent;
     return true; 
@@ -57,7 +53,7 @@ public:
 
   void makeEntry(unsigned *histo, float hr) 
   {
-    int ihr = (int) (hr + 0.5);
+    int ihr = (int) hr;
     if(ihr > 23) ihr -= 24;
 
     if(ihr < 0) ihr += 24; 
@@ -68,11 +64,9 @@ public:
   void dumpTables() {
     dumpTable(rxhisto, osrx);
     dumpTable(txhisto, ostx);
-    dumpTable(txrxhisto, ostxrx);
 
     osrx.close();
     ostx.close();
-    ostxrx.close();
   }
 
   void dumpTable(unsigned * histo, std::ostream & os) {
@@ -86,10 +80,9 @@ public:
   }
 
 private:
-  std::ofstream osrx, ostx, ostxrx;
+  std::ofstream osrx, ostx;
   unsigned rxhisto[24];
   unsigned txhisto[24];
-  unsigned txrxhisto[24];
 }; 
 
 int main(int argc, char * argv[])
