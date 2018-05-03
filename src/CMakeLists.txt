@@ -5,6 +5,7 @@ set(WSPRLogLib_SRCS
   TimeCorr.cxx
   ChiSquared.cxx
   KolmogorovSmirnov.cxx
+  SolarTime.cxx
   )
 
 add_library(WSPRLogLib ${WSPRLogLib_SRCS})
@@ -135,3 +136,38 @@ target_link_libraries(HistoStats
 	 ${Boost_LIBRARIES})
 
 install(TARGETS HistoStats DESTINATION bin)
+
+set(RiskRatio_SRCS
+  RiskRatio.cxx
+  )
+
+add_executable(RiskRatio ${RiskRatio_SRCS})
+ 
+target_link_libraries(RiskRatio WSPRLogLib
+	 ${Boost_LIBRARIES})
+
+install(TARGETS RiskRatio DESTINATION bin)
+
+
+set(CallRR_SRCS
+  CallRR.cxx
+  )
+
+add_executable(CallRR ${CallRR_SRCS})
+ 
+target_link_libraries(CallRR WSPRLogLib
+	 ${Boost_LIBRARIES})
+
+install(TARGETS CallRR DESTINATION bin)
+
+
+set(WSPRLogSolTimeOR_SRCS
+  WSPRLogSolTimeOR.cxx
+  )
+
+add_executable(WSPRLogSolTimeOR ${WSPRLogSolTimeOR_SRCS})
+ 
+target_link_libraries(WSPRLogSolTimeOR WSPRLogLib
+	 ${Boost_LIBRARIES})
+
+install(TARGETS WSPRLogSolTimeOR DESTINATION bin)

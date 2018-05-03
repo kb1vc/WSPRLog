@@ -33,8 +33,21 @@ public:
 
 
   void printHistogram(std::ostream & os) {
+    // sum the samples.. 
+    int sum = 0; 
     for(auto he: histogram) {
-      os << he.first << " " << he.second << std::endl; 
+      sum += he.second;
+    }
+
+    double fsum = ((double) sum); 
+    double cdf = 0.0; 
+
+    for(auto he: histogram) {
+      double v =((double) he.second); 
+      double pdf = v / fsum; 
+      cdf += pdf; 
+      os << boost::format("%d %d %f %f\n")
+	% he.first % he.second % pdf % cdf; 
     }
   }
 private:
@@ -65,12 +78,14 @@ int main(int argc, char * argv[])
     
   po::variables_map vm; 
 
+  std::string what_am_i("Build histogram, pdf, cdf, from log file and selected field\n");
+
   try {
     po::store(po::command_line_parser(argc, argv).options(desc)
 	      .positional(pos_opts).run(), vm);
     
     if(vm.count("help")) {
-      std::cout << "Filter WSPR logs by frequency range\n\t"
+      std::cout << what_am_i
 		<< desc << std::endl; 
       exit(-1);
     }
@@ -79,13 +94,13 @@ int main(int argc, char * argv[])
   }
   catch(po::required_option & e) {
     std::cerr << "ERROR: " << e.what() << std::endl << std::endl; 
-    std::cerr << "Filter WSPR logs by frequency range\n\t "
+    std::cerr << what_am_i
 	      << desc << std::endl;
     exit(-1);    
   }
   catch(po::error & e) {
     std::cerr << "ERROR: " << e.what() << std::endl << std::endl; 
-    std::cerr << "Filter WSPR logs by frequency range\n\t "
+    std::cerr << what_am_i
 	      << desc << std::endl;
     exit(-1);        
   }

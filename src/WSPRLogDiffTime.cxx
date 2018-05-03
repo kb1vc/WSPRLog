@@ -1,5 +1,5 @@
 #include "WSPRLog.hxx"
-#include "TimeCorr.hxx"
+#include "SolarTime.hxx"
 #include <boost/format.hpp>
 #include <boost/program_options.hpp>
 #include <string>
@@ -9,19 +9,17 @@
 #include <math.h>
 #include <set>
 
-// plot distance, "local time" pairs as histogram
+// plot distance, "solar time" pairs as histogram
 class myWSPRLog : public WSPRLog {
 public:
   myWSPRLog(const std::string & out_base_name) : WSPRLog() {
     osrx.open(out_base_name + "_FD_T_rx.dat");
     ostx.open(out_base_name + "_FD_T_tx.dat");
-    ostxrx.open(out_base_name + "_FD_T_txrx.dat");    
     
     for(int i = 0; i < 24; i++) {
       for(int j = 0; j < 200; j++) {
 	rxhisto[i][j] = 0;
 	txhisto[i][j] = 0;
-	txrxhisto[i][j] = 0; 	
       }
     }
   }
@@ -29,7 +27,7 @@ public:
   ~myWSPRLog() {
   }
 
-  enum SEL { RX, TX, TXRX };
+  enum SEL { RX, TX };
 
   bool processEntry(WSPRLogEntry * ent) {
     std::string from, to; 
@@ -45,26 +43,24 @@ public:
     freq_diff = ent->freq_diff; 
 
     // calculate the "local time" for to, from, and midpath
-    float fto = TimeCorr::localTime(from, et);
-    float tto = TimeCorr::localTime(to,  et);
-    float mto = TimeCorr::localTime(from, to,  et);
+    SolarTime tx_time(et, from);
+    SolarTime rx_time(et, to);     
     
     int ifreq_diff = (int) freq_diff; 
 
-    makeEntry(RX, tto, ifreq_diff); 
-    makeEntry(TX, fto, ifreq_diff);
-    makeEntry(TXRX, mto, ifreq_diff);     
+    makeEntry(RX, rx_time.getFHour(), ifreq_diff); 
+    makeEntry(TX, tx_time.getFHour(), ifreq_diff);
 
     delete ent;
     return true; 
   }
 
 
-  void makeEntry(SEL sel, float hr, int offset) {
+  void makeEntry(SEL sel, double hr, int offset) {
     int off_idx = offset + 100; 
     if((off_idx < 0) || (off_idx >= 200)) return; 
 
-    int ihr = (int) (hr + 0.5);
+    int ihr = (int) hr;
     if(ihr > 23) ihr -= 24;
 
     if((ihr < 0) || (ihr > 23)) {
@@ -80,20 +76,15 @@ public:
     case TX:
       txhisto[ihr][off_idx]++;
       break;
-    case TXRX:
-      txrxhisto[ihr][off_idx]++;
-      break;
     }
   }
 
   void dumpTables() {
     dumpTable(RX, osrx);
     dumpTable(TX, ostx);
-    dumpTable(TXRX, ostxrx);
 
     osrx.close();
     ostx.close();
-    ostxrx.close();
   }
 
   void dumpTable(SEL sel, std::ostream & os) {
@@ -109,9 +100,6 @@ public:
 	  break;
 	case TX:
 	  val = txhisto[i][j];
-	  break;
-	case TXRX:
-	  val = txrxhisto[i][j];
 	  break;
 	}
 	total += val; 
@@ -132,9 +120,6 @@ public:
 	case TX:
 	  val = txhisto[i][j];
 	  break;
-	case TXRX:
-	  val = txrxhisto[i][j];
-	  break;
 	}
 
 	double fval = ((double) val) / ftotal; 
@@ -146,10 +131,9 @@ public:
   }
 
 private:
-  std::ofstream osrx, ostx, ostxrx;
+  std::ofstream osrx, ostx;
   unsigned rxhisto[24][200];
   unsigned txhisto[24][200];
-  unsigned txrxhisto[24][200]; 
 }; 
 
 int main(int argc, char * argv[])

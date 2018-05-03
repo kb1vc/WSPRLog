@@ -6,7 +6,6 @@
 std::vector<float> KolmogorovSmirnov::cdf(const std::vector<int> & S, int & N)
 {
   std::vector<float> ret; 
-  
 
   N = 0;
   for(int i = 0; i < S.size(); i++) {
@@ -39,8 +38,8 @@ bool KolmogorovSmirnov::test(float alpha,
   }
 
   // now is the difference significant? 
-  float n = (float) S.size(); //  N;
-  float m = (float) X.size(); // M; 
+  float n = (float) N;
+  float m = (float) M; 
 
   float calpha = sqrt(-0.5 * log(alpha / 2.0));
   

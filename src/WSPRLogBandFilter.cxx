@@ -127,12 +127,6 @@ public:
   }
 
 
-  void dumpMultiRx(std::ostream & os) {
-    for(auto se: multi_rx_reporters) {
-      os << se << std::endl; 
-    }
-  }
-
   void dumpReportCounts(const std::string & ofn) {
     std::string bn = boost::filesystem::basename(ofn); 
     dumpRC(total_rx_reports, img_rx_reports, bn + "_rx.prop");
@@ -180,7 +174,6 @@ int main(int argc, char * argv[])
     ("help", "help message")
     ("log", po::value<std::string>(&in_name)->required(), "Input log file (csv) in WSPR log format")
     ("out", po::value<std::string>(&out_name)->required(), "Filtered output log file (csv) in WSPR log format")
-    ("multi", po::value<std::string>(&multi_name)->required(), "List of stations that may have multiple receivers")
    ("flo", po::value<double>(&lo_freq)->required(), "lower bound of frequency range")
     ("fhi", po::value<double>(&hi_freq)->required(), "upper bound of frequency range")
     ("igz", po::value<bool>(&input_gzipped)->default_value(false), "if true, input file is gzip compressed");
@@ -188,7 +181,6 @@ int main(int argc, char * argv[])
   po::positional_options_description pos_opts ;
   pos_opts.add("log", 1);
   pos_opts.add("out", 1);
-  pos_opts.add("multi", 1);  
     
   po::variables_map vm; 
 
@@ -225,8 +217,6 @@ int main(int argc, char * argv[])
   // got something stuck in the pipeline. 
   wlog.processEntry(NULL); 
 
-  std::ofstream rep(multi_name);
-  wlog.dumpMultiRx(rep);
 
   wlog.dumpReportCounts(out_name); 
 }

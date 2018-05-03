@@ -10,6 +10,7 @@
 int main(int argc, char * argv[])
 {
   std::string S_fname, X_fname; 
+  std::string cdf_name; 
 
   namespace po = boost::program_options;
 
@@ -17,7 +18,8 @@ int main(int argc, char * argv[])
   desc.add_options()
     ("help", "help message")
     ("standard", po::value<std::string>(&S_fname)->required(), "Histogram file for null hypothesis")
-    ("experiment", po::value<std::string>(&X_fname)->required(), "Histogram file for experimental result");
+    ("experiment", po::value<std::string>(&X_fname)->required(), "Histogram file for experimental result")
+    ("cdf", po::value<std::string>(&cdf_name)->default_value(""), "CDF output file") ;
   
   po::positional_options_description pos_opts ;
   pos_opts.add("standard", 1);
@@ -66,7 +68,6 @@ int main(int argc, char * argv[])
   }
 
   // now calculate the KS score
-  
   float a = 0.5; 
   float sv[] = {5.0, 2.0, 1.0}; 
   for(float a = 0.1; a > 0.0001; a = 0.1 * a) {
@@ -76,5 +77,17 @@ int main(int argc, char * argv[])
       std::cout << boost::format("alpha = %f  reject = %c\n")
 	% aa % ((char) (reject ? 'T' : 'F'));
     }
+  }
+  
+  int Ssum = 0; 
+  int Xsum = 0; 
+  if(cdf_name.length() != 0) {
+    std::vector<float> Scdf = KolmogorovSmirnov::cdf(S, Ssum);
+    std::vector<float> Xcdf = KolmogorovSmirnov::cdf(X, Xsum);    
+    std::ofstream cof(cdf_name); 
+    for(int i = 0; i < Scdf.size(); i++) {
+      cof << boost::format("%d %g %g\n") % i % Scdf[i] % Xcdf[i];
+    }
+    cof.close();
   }
 }
