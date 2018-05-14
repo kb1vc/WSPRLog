@@ -10,7 +10,6 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
-#pragma message "BUILDING WSPRLog.cxx"
 
 std::map<std::string, WSPRLogEntry::Field> WSPRLogEntry::field_map;
 boost::format * WSPRLogEntry::fmt = NULL; 
@@ -88,7 +87,7 @@ WSPRLogEntry::WSPRLogEntry(const std::string & line)
 
 WSPRLog::WSPRLog()
 {
-  update_count_interval = 10000;
+  update_count_interval = 250000;
   line_count = 0; 
 }
 

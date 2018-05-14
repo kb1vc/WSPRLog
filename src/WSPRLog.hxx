@@ -103,7 +103,7 @@ public:
   virtual void updateCheck() {
     line_count++;
     if((line_count % update_count_interval) == 0) {
-      std::cerr << boost::format("Line_Count = %d\r") % line_count;
+      std::cerr << boost::format("Line_Count = %d\n") % line_count;
     }
   }
 private: 

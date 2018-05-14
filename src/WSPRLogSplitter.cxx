@@ -13,6 +13,7 @@ class myWSPRLog : public WSPRLog {
 public:
   myWSPRLog(const std::string outf_base_name): WSPRLog() {
     buildBandList(outf_base_name); 
+    distance_threshold = 100; 
   }
 
 
@@ -24,6 +25,11 @@ public:
   
 
   bool processEntry(WSPRLogEntry * ent) {
+    // delete all records that are over a path less than 100km
+    if(ent->dist < distance_threshold) {
+      delete ent; 
+      return false;       
+    }
     std::ostream * osp = getBandFile(ent->freq); 
     if(osp != NULL) {
       ent->print(*osp);
@@ -66,6 +72,7 @@ private:
     std::ofstream out; 
   }; 
 
+  float distance_threshold; 
   std::list<BandFile *> band_list; 
 }; 
 
