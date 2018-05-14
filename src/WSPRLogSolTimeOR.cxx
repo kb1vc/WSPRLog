@@ -19,7 +19,7 @@
 // That is OR = [(events at time = T) * (non-events over 24 hours)] /
 //              [(events in 24 hours) * (non-events at time = T)]
 // 
-const int MINUTES_PER_BUCKET = 15;
+const int MINUTES_PER_BUCKET = 2;
 const int BUCKETS_PER_TABLE = ((24 * 60) / MINUTES_PER_BUCKET);
 const int BUCKETS_PER_HOUR = (60 / MINUTES_PER_BUCKET);
 
@@ -89,9 +89,6 @@ public:
     SolarTime rx_time(ent->dtime, ent->rxgrid);    
     float mid_hour = TimeCorr::circularMean(24.0, tx_time.getFHour(), rx_time.getFHour());
 
-    std::cerr << boost::format("rx time  %f  tx_time %f  mid_time = %f\n")
-      % rx_time.getFHour() % tx_time.getFHour() % mid_hour; 
-
     bump(RX, rx_time.getFHour());
     bump(TX, tx_time.getFHour());
     bump(MID, mid_hour);
@@ -109,8 +106,8 @@ public:
 // 
 
   void calcOR(Position pos, std::vector<float> & ort) {
-    std::vector<unsigned int> & exc_histo = rx_histo[1];
-    std::vector<unsigned int> & norm_histo = rx_histo[0];     
+    std::vector<unsigned int> exc_histo;
+    std::vector<unsigned int> norm_histo;
     float exc_count;
     float norm_count; 
     for(int i = 0; i < BUCKETS_PER_TABLE; i++) {
@@ -159,12 +156,12 @@ public:
     os << "# solar hour, rximage reports, rxall reports, tximage reps, txall reps, midimage reps, imgall reps, rxOR, txOR, midOR\n";
 
     for(int i = 0; i < BUCKETS_PER_TABLE; i++) {
-      os << boost::format("%5.2f, ") % (((float) i) / 4.0);
+      os << boost::format("%5.2f, ") % (((float) (i * MINUTES_PER_BUCKET)) / 60.0);
       os << boost::format(" %8d, %8d, %8d, %8d, %8d, %8d, ") 
 	% rx_histo[1][i] % rx_histo[0][i] 
 	% tx_histo[1][i] % tx_histo[0][i]
 	% mid_histo[1][i] % mid_histo[0][i];
-      os << boost::format("%g %g %g\n")
+      os << boost::format("%g, %g, %g\n")
 	% rx_or[i] % tx_or[i] % mid_or[i]; 
     }
 

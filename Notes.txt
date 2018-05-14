@@ -1,0 +1,23 @@
+Reason for 100km threshold... in WSPRLogSplitter... 
+
+among other phenomena is the frequent report by 2E0NGV from
+G6CMV on 30m.  The contacts tend to appear at the same time every
+morning (solar time) +/- a few minutes.  The two stations are
+7km apart.  with the reported SNR in excess of 10dB (often 20 dB).
+These reports are unlikely caused by any propagation effects.
+
+It may make sense to do a SNR threshold for the primary signal, to
+avoid such problems.  But the distance threshold may be sufficient.
+
+(This effect was discovered while looking at odds ratio for non line
+frequency offsets (img_D reports) vs. solar time.  Normally there is
+an odds-boost at solar rise, but there were peaks at 02:45 solar time
++/- that were way beyond reasonable expectation.  All were accounted
+for by what appears to be a standard pattern where 2E0NGV would report
+about a dozen images from G6CMV.  These appear to be symmetric about
+the main lobe and spaced at 12Hz intervals more or less. There were
+46 such contacts in the March 2018 log for 30m. This was sufficient to
+greatly skew the statistics. The reports all occurred on March 4, 2018
+with most reported at 22:20 or 22:10 UTC.)
+
+

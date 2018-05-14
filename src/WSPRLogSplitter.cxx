@@ -24,6 +24,11 @@ public:
   
 
   bool processEntry(WSPRLogEntry * ent) {
+    // delete all records that are over a path less than 100km
+    if(ent->dist < DISTANCE_THRESHOLD) {
+      delete ent; 
+      return false;       
+    }
     std::ostream * osp = getBandFile(ent->freq); 
     if(osp != NULL) {
       ent->print(*osp);

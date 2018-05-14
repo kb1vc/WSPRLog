@@ -171,3 +171,15 @@ target_link_libraries(WSPRLogSolTimeOR WSPRLogLib
 	 ${Boost_LIBRARIES})
 
 install(TARGETS WSPRLogSolTimeOR DESTINATION bin)
+
+
+set(WSPRLogToMidSol_SRCS
+  WSPRLogToMidSol.cxx
+  )
+
+add_executable(WSPRLogToMidSol ${WSPRLogToMidSol_SRCS})
+ 
+target_link_libraries(WSPRLogToMidSol WSPRLogLib
+	 ${Boost_LIBRARIES})
+
+install(TARGETS WSPRLogToMidSol DESTINATION bin)
