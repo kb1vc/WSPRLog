@@ -161,6 +161,7 @@ public:
 	% rx_histo[1][i] % rx_histo[0][i] 
 	% tx_histo[1][i] % tx_histo[0][i]
 	% mid_histo[1][i] % mid_histo[0][i];
+
       os << boost::format("%g, %g, %g\n")
 	% rx_or[i] % tx_or[i] % mid_or[i]; 
     }
@@ -182,6 +183,7 @@ int main(int argc, char * argv[])
 
   desc.add_options()
     ("help", "help message")
+    ("igz", po::value<bool>(&input_gzipped)->default_value(false), "if true, input file is gzip compressed")    
     ("standard", po::value<std::string>(&std_name)->required(), "WSPR log for baseline reports")
     ("exception", po::value<std::string>(&exc_name)->required(), "WSPR log for baseline reports")
     ("report", po::value<std::string>(&report_name)->required(), "Output data file containing calls, and risk ratios");

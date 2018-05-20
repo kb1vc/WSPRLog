@@ -293,6 +293,7 @@ bool WSPRLogEntry::getField(WSPRLogEntry::Field sel, int & val)
   case WSPRLogEntry::BAND:
   case WSPRLogEntry::CODE:
   case WSPRLogEntry::DTIME:
+    val = (int) dtime;
 
   case WSPRLogEntry::VERSION:
   case WSPRLogEntry::TXCALL:

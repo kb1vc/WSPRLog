@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -v
 # some are prolific two-receiver stations
 fname=$1
 basename=$2
@@ -22,6 +22,7 @@ do
     # remove the junk files
     rm ${rfn}_img_tmp.csv [rt]x_${rfn}_callrr.rpt ${rfn}_img_tmp_*.csv 
     # now generate the splits with problematic calls removed
+    WSPRLogBandFilter --flo 0.0 --fhi 100e9 ${rfn}_clean.csv ${rfn}_img.csv    
     WSPRLogLineFilter ${rfn}_img.csv ${rfn}_img
     # 
     for bif in ${rfn}_img_D.csv
@@ -29,7 +30,7 @@ do
 	echo "    ${bif}"
 	hfbn=`basename ${bif} .csv`
 	# calculate the relative risk for exception reports by solar hour
-	WSPRLogSolTimeOR ${bf}_clean.csv ${bif} ${hfbn}_sol_time_or.dat
+	WSPRLogSolTimeOR ${rfn}_clean.csv ${bif} ${hfbn}_sol_time_or.dat
 	WSPRLogHisto ${bif} ${hfbn}_FD.hist --field FREQ_DIFF
 	WSPRLogXY ${bif} ${hfbn}_DIST_FD.xydat --x_field FREQ_DIFF --y_field DIST
     done

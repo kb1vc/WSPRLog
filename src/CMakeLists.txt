@@ -183,3 +183,27 @@ target_link_libraries(WSPRLogToMidSol WSPRLogLib
 	 ${Boost_LIBRARIES})
 
 install(TARGETS WSPRLogToMidSol DESTINATION bin)
+
+
+set(WSPRLogSolAzHisto_SRCS
+  WSPRLogSolAzHisto.cxx
+  )
+
+add_executable(WSPRLogSolAzHisto ${WSPRLogSolAzHisto_SRCS})
+ 
+target_link_libraries(WSPRLogSolAzHisto WSPRLogLib
+	 ${Boost_LIBRARIES})
+
+install(TARGETS WSPRLogSolAzHisto DESTINATION bin)
+
+
+set(WSPRLogSolAzOR_SRCS
+  WSPRLogSolAzOR.cxx
+  )
+
+add_executable(WSPRLogSolAzOR ${WSPRLogSolAzOR_SRCS})
+ 
+target_link_libraries(WSPRLogSolAzOR WSPRLogLib
+	 ${Boost_LIBRARIES})
+
+install(TARGETS WSPRLogSolAzOR DESTINATION bin)

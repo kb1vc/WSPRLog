@@ -25,6 +25,7 @@ public:
 
   bool processEntry(WSPRLogEntry * ent) {
     int x, y; 
+    
 
     if(ent == NULL) return false; 
 
