@@ -40,9 +40,9 @@ WSPRLogEntry::WSPRLogEntry(const std::string & line)
 {
   std::vector<std::string> logent;
   std::vector<std::string> snrvec;
-  
+
   if(fmt == NULL) {
-    fmt = new boost::format("%d,%ld,%s,%s,%4.1f|%4.1f,%12.6f,%s,%s,%3.0f,%3.1f,%6f,%3f,%d,%s,%d,%d\n");
+    fmt = new boost::format("%d,%ld,%s,%s,%4.1f|%4.1f,%12.6f,%s,%s,%3.0f,%3.1f,%6f,%3f,%d,%s,%d,%d\n");  
   }
 
   boost::algorithm::split(logent, line, boost::is_any_of(","));
@@ -88,19 +88,19 @@ WSPRLogEntry::WSPRLogEntry(const std::string & line)
 WSPRLog::WSPRLog()
 {
   update_count_interval = 250000;
+
   line_count = 0; 
 }
 
 void WSPRLog::readLog(std::istream & inf) 
 {
-  std::string line; 
-
   while(1) {
     WSPRLogEntry *le = WSPRLogEntry::get(inf);
     if(le == NULL) break;
     if(isKeeper(le)) {
       processEntry(le); 
     }
+    delete le; 
     updateCheck(); 
   }
 }
@@ -136,14 +136,13 @@ std::ostream &  WSPRLogEntry::print(std::ostream & os)
 
 WSPRLogEntry * WSPRLogEntry::get(std::istream & is)
 {
-  std::string line; 
-
+  std::string linebuf; 
   while(1) {
-    getline(is, line); 
+    getline(is, linebuf); 
     if(!is.good()) return NULL; 
-    if(line == "") continue;
+    if(linebuf == "") continue;
     
-    auto * ret = new WSPRLogEntry(line); 
+    auto * ret = new WSPRLogEntry(linebuf); 
     return ret; 
   } 
 

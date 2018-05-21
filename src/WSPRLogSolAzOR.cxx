@@ -52,7 +52,7 @@ public:
 
   void bump(float t_hour, float az) {
     // quantize into 10 minute buckets
-    int time_bucket = ((int) floor(t_hour * 6.0));
+    int time_bucket = ((int) floor(t_hour * 10.0));
     // quantize into 5 degree segments
     int az_bucket = (int) (az / 5.0); 
     if(time_bucket >= NUM_TIME_BUCKETS) time_bucket = (NUM_TIME_BUCKETS - 1);
@@ -73,10 +73,12 @@ public:
         float De = exc_val; 
 	float He = std_val - exc_val; 
 	float OR;
+	float soltime = ((float) tbucket) / 10.0;
+	  
 	if(He > 0.0) OR = (De / He) * count_ratio; 
 	else OR = 0.0; 
-	os << boost::format("%d %d %f\n")
-	  % (tbucket * 10) % (azbucket * 5) % OR; 
+	os << boost::format("%5.2f %d %f\n")
+	  % (tbucket / 10.0) % (azbucket * 5) % OR; 
       }
     }
     os.close();
