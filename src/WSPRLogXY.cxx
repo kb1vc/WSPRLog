@@ -33,7 +33,7 @@ public:
     ent->getField(ysel, y);
 
     os << x << " " << y << std::endl; 
-    return true; 
+    return false;
   }
 
 

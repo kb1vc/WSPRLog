@@ -44,6 +44,7 @@ public:
       if(ent != NULL) {
 	last_time = ent->dtime; 
 	addEntry(ent); 
+	return true; 
       }
       return false; 
     }

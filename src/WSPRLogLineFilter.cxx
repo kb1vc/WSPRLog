@@ -45,13 +45,13 @@ public:
 
     ent->getField(WSPRLogEntry::FREQ_DIFF, fdiff); 
 
-    if(fdiff == 0) return true; 
+    if(fdiff == 0) return false; 
     
     if(set50.find(fdiff) != set50.end()) ent->print(out50);
     else if(set60.find(fdiff) != set60.end()) ent->print(out60);
     else ent->print(outDist);     
 
-    return true; 
+    return false; 
   }
 
 private:
