@@ -23,6 +23,8 @@ do
     rm ${rfn}_img_tmp.csv [rt]x_${rfn}_callrr.rpt ${rfn}_img_tmp_*.csv 
     # now generate the splits with problematic calls removed
     WSPRLogBandFilter --flo 0.0 --fhi 100e9 ${rfn}_clean.csv ${rfn}_img.csv    
+    # generate the R input file
+    WSPRLog2R ${rfn}_clean.csv ${rfn}_R.csv        
     WSPRLogLineFilter ${rfn}_img.csv ${rfn}_img
     # 
     for bif in ${rfn}_img_D.csv

@@ -46,7 +46,7 @@ public:
     SolarTime rx_time(ent->dtime, ent->rxgrid);    
     float mid_hour = TimeCorr::circularMean(24.0, tx_time.getFHour(), rx_time.getFHour());
     bump(mid_hour, ent->az); 
-    return true; 
+    return false;
   }
 
 

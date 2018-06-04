@@ -51,8 +51,7 @@ public:
     makeEntry(RX, rx_time.getFHour(), ifreq_diff); 
     makeEntry(TX, tx_time.getFHour(), ifreq_diff);
 
-    delete ent;
-    return true; 
+    return false; 
   }
 
 

@@ -98,9 +98,11 @@ void WSPRLog::readLog(std::istream & inf)
     WSPRLogEntry *le = WSPRLogEntry::get(inf);
     if(le == NULL) break;
     if(isKeeper(le)) {
-      processEntry(le); 
+      if(!processEntry(le)) delete le; 
     }
-    delete le; 
+    else {
+      delete le; 
+    }
     updateCheck(); 
   }
 }

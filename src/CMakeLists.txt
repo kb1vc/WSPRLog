@@ -207,3 +207,28 @@ target_link_libraries(WSPRLogSolAzOR WSPRLogLib
 	 ${Boost_LIBRARIES})
 
 install(TARGETS WSPRLogSolAzOR DESTINATION bin)
+
+
+set(WSPRLogGridMap_SRCS
+  WSPRLogGridMap.cxx
+  )
+
+add_executable(WSPRLogGridMap ${WSPRLogGridMap_SRCS})
+ 
+target_link_libraries(WSPRLogGridMap WSPRLogLib
+	 ${Boost_LIBRARIES})
+
+install(TARGETS WSPRLogGridMap DESTINATION bin)
+
+
+
+set(WSPRLog2R_SRCS
+  WSPRLog2R.cxx
+  )
+
+add_executable(WSPRLog2R ${WSPRLog2R_SRCS})
+ 
+target_link_libraries(WSPRLog2R WSPRLogLib
+	 ${Boost_LIBRARIES})
+
+install(TARGETS WSPRLog2R DESTINATION bin)

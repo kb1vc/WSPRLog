@@ -45,8 +45,7 @@ public:
     makeEntry(rxhisto, rx_time.getFHour());
     makeEntry(txhisto, tx_time.getFHour());
 
-    delete ent;
-    return true; 
+    return false;
   }
 
 

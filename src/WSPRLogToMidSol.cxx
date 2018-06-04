@@ -39,6 +39,8 @@ public:
     ent->dtime = ((int) floor(mid_hour * 60.0)); // minutes past the hour
 
     ent->print(os);
+    
+    return false; 
   }
 
 

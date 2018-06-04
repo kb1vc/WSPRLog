@@ -93,7 +93,7 @@ public:
     bump(TX, tx_time.getFHour());
     bump(MID, mid_hour);
 
-    return true; 
+    return false;
   }
 
 // accumulate number of reports per solar hour for a
