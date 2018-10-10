@@ -46,6 +46,10 @@ public:
       if((i % 6) == 0) os << std::endl; 
     }
   }
+
+  static void printHeader(std::ostream & os) {
+    os << "SPOT,DTIME,RXCALL,RXGRID,SNR,REFSNR,FREQ,TXCALL,TXGRID,POW,DRIFT,DIST,AZ,BAND,VER,CODE,FREQDIFF\n";    
+  }
   
   bool getField(Field sel, unsigned long & val); 
   bool getField(Field sel, double & val); 

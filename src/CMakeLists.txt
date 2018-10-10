@@ -232,3 +232,15 @@ target_link_libraries(WSPRLog2R WSPRLogLib
 	 ${Boost_LIBRARIES})
 
 install(TARGETS WSPRLog2R DESTINATION bin)
+
+
+set(WSPRLog2Pandas_SRCS
+  WSPRLog2Pandas.cxx
+  )
+
+add_executable(WSPRLog2Pandas ${WSPRLog2Pandas_SRCS})
+ 
+target_link_libraries(WSPRLog2Pandas WSPRLogLib
+	 ${Boost_LIBRARIES})
+
+install(TARGETS WSPRLog2Pandas DESTINATION bin)

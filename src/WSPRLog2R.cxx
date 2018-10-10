@@ -27,7 +27,7 @@ public:
 
     printRHeader();
 
-    fmt = new boost::format("%ld,%8.4f,%8.4f,%8.4f,%f,%f,%f,%f,%f,%f,%f,%s,%s,%s,%s\n");
+    fmt = new boost::format("%ld,%6.2f,%6.2f,%6.2f,%f,%f,%3.0f,%3.0f,%3.0f,%4.0f,%6.0f,%s,%s,%s,%s\n");
 
   }
 
