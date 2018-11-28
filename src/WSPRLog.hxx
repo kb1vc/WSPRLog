@@ -48,7 +48,7 @@ public:
   }
 
   static void printHeader(std::ostream & os) {
-    os << "SPOT,DTIME,RXCALL,RXGRID,SNR,REFSNR,FREQ,TXCALL,TXGRID,POW,DRIFT,DIST,AZ,BAND,VER,CODE,FREQDIFF\n";    
+    os << "SPOT,DTIME,RXCALL,RXGRID,DIFFSNR,REFSNR,FREQ,TXCALL,TXGRID,POW,DRIFT,DIST,AZ,BAND,VER,CODE,FREQDIFF\n";    
   }
   
   bool getField(Field sel, unsigned long & val); 

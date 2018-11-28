@@ -11,32 +11,26 @@
 #include <list>
 #include <math.h>
 #include <set>
+#include <iomanip>
 
 class myWSPRLog : public WSPRLog {
 public:
-  myWSPRLog(const std::string outf_name, 
-	    double _f_lo, double _f_hi) : WSPRLog() {
+  myWSPRLog(double _f_lo, double _f_hi, bool print_header = false) : WSPRLog() {
     last_time = 0; 
+
+    freq_min = _f_lo; 
+    freq_max = _f_hi; 
 
     //create a list of "bands" that we exclude 
     // because they are close to multiples of the 
     // power line frequency. 
     int i, j; 
-    for(i = -4; i < 5; i++) {
-      if(i == 0) continue; 
-      for(j = -2; j < 3; j++) {
-	line_freqs.insert(i * 50 + j);
-	line_freqs.insert(i * 60 + j);	
-      }
-    }
     
-    out.open(outf_name);
-
-    printHeader();
+    if(print_header) printHeader();
   }
 
   void finish() {
-    out.close();
+
   }
   
   bool processEntry(WSPRLogEntry * ent) {
@@ -44,8 +38,7 @@ public:
 
     if((ent != NULL) && (ent->dtime == last_time)) {
       // add entry to tx list
-      addEntry(ent); 
-      return true; 
+      return addEntry(ent); 
     }
     else {
       // we are done.  Dump the pairs, if any
@@ -53,8 +46,7 @@ public:
       clearMap();
       if(ent != NULL) {
 	last_time = ent->dtime; 
-	addEntry(ent); 
-	return true; 
+	return addEntry(ent); 
       }
       return false; 
     }
@@ -64,8 +56,8 @@ public:
 
   void printHeader() {
     // print column labels
-    out << "RXSOL,TXSOL,MIDSOL,"; 
-    WSPRLogEntry::printHeader(out); 
+    std::cout << "RXSOL,TXSOL,MIDSOL,"; 
+    WSPRLogEntry::printHeader(std::cout); 
     // SPOT,DTIME,RXCALL,RXGRID,SNR,REFSNR,FREQ,TXCALL,TXGRID,POW,DRIFT,DIST,AZ,BAND,VER,CODE,FREQDIFF\n";
   }
 
@@ -79,17 +71,15 @@ public:
 					    tx_time.getFHour(), 
 					    rx_time.getFHour());
 
-    out << boost::format("%ld,%ld,%ld,")
+    std::cout << boost::format("%ld,%ld,%ld,")
       % tx_time.getFHour() % rx_time.getFHour() % mid_hour;
     
-    fle->print(out);
+    fle->print(std::cout);
   }
 
   // if anyone ever reports more than 4 image pairs in one cycle, we mark
   // them as "bad"
   // we report pairs and non-pairs.  
-  // But we don't report pairs where the difference frequency is 
-  // in the line_freqs set. 
   void dumpPairs() {
     for(auto & mapent : pair_map) {
       if(mapent.second.size() > 1) {
@@ -99,11 +89,9 @@ public:
 	fle->main_snr = fle->snr;
 
 	for(auto & le : mapent.second) {
-	  // print them all. 
-	  if(le != fle) le->calcDiff(fle);
-	  if(line_freqs.find(le->freq_diff) == line_freqs.end()) {
-	    printExtended(le); 
-	  }
+	  // print them all.
+	  le->calcDiff(fle);
+	  printExtended(le); 
 	}
       }
       else {
@@ -127,37 +115,44 @@ public:
     pair_map.clear();
   }
 
-  void addEntry(WSPRLogEntry * ent) {
-    std::string key = ent->txcall + "," + ent->rxcall; 
-    pair_map[key].push_back(ent); 
+  bool addEntry(WSPRLogEntry * ent) {
+    if((ent->freq <= freq_max) && (ent->freq >= freq_min)) {
+      std::string key = ent->txcall + "," + ent->rxcall; 
+      pair_map[key].push_back(ent); 
+      return true; 
+    }
+    else {
+      return false; 
+    }
   }
 
 private:
-  std::ofstream out; 
   unsigned long last_time; 
   std::map<std::string, std::list<WSPRLogEntry *> > pair_map;
-  std::set<int> line_freqs; 
+  double freq_min, freq_max; 
 }; 
 
 int main(int argc, char * argv[])
 {
-  std::string in_name, out_name, multi_name;
-  double lo_freq, hi_freq; 
+  std::string in_name, multi_name;
+  double freq_min, freq_max;   
   bool input_gzipped; 
   namespace po = boost::program_options;
 
 
   po::options_description desc("Options:");
+  bool print_header; 
 
   desc.add_options()
     ("help", "help message")
-    ("log", po::value<std::string>(&in_name)->required(), "Input log file (csv) in WSPR log format")
-    ("out", po::value<std::string>(&out_name)->required(), "Filtered output log file (csv) in CSV log format")
-    ("igz", po::value<bool>(&input_gzipped)->default_value(false), "if true, input file is gzip compressed");
+    ("freq_min", po::value<double>(&freq_min)->required(), "Lower edge of band-of-interest (MHz)") 
+    ("freq_max", po::value<double>(&freq_max)->required(), "Upper edge of band-of-interest (MHz)")
+    ("log", po::value<std::string>(&in_name)->default_value("STDIN"), "Input log file (csv) in WSPR log format")
+    ("igz", po::value<bool>(&input_gzipped)->default_value(false), "if true, input file is gzip compressed")
+    ("header", po::value<bool>(&print_header)->default_value(true), "if true, input file is gzip compressed");  
   
   po::positional_options_description pos_opts ;
   pos_opts.add("log", 1);
-  pos_opts.add("out", 1);
     
   po::variables_map vm; 
 
@@ -166,7 +161,7 @@ int main(int argc, char * argv[])
 	      .positional(pos_opts).run(), vm);
     
     if(vm.count("help")) {
-      std::cout << "Filter WSPR logs by frequency range\n\t"
+      std::cerr << "Filter WSPR logs by frequency range\n\t"
 		<< desc << std::endl; 
       exit(-1);
     }
@@ -186,9 +181,17 @@ int main(int argc, char * argv[])
     exit(-1);        
   }
 
-  myWSPRLog wlog(out_name, lo_freq, hi_freq);
+  std::cerr << boost::format("freq_min = %f freq_max = %f\n") % freq_min % freq_max; 
+  myWSPRLog wlog(freq_min, freq_max, print_header);
 
-  wlog.readLog(in_name, input_gzipped);
+  // establish a default float precision that gets us 1Hz resolution
+  
+  if(in_name == "STDIN") {
+    wlog.readLog(std::cin);
+  }
+  else {
+    wlog.readLog(in_name, input_gzipped);
+  }
   
   // call processEntry one last time, to see if we've
   // got something stuck in the pipeline. 

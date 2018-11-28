@@ -10,6 +10,7 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <string>
 
 std::map<std::string, WSPRLogEntry::Field> WSPRLogEntry::field_map;
 boost::format * WSPRLogEntry::fmt = NULL; 
@@ -42,11 +43,19 @@ WSPRLogEntry::WSPRLogEntry(const std::string & line)
   std::vector<std::string> snrvec;
 
   if(fmt == NULL) {
-    fmt = new boost::format("%d,%ld,%s,%s,%4.1f|%4.1f,%12.6f,%s,%s,%3.0f,%3.1f,%6f,%3f,%d,%s,%d,%d\n");  
+    fmt = new boost::format("%d,%ld,%s,%s,%4.1f,%4.1f,%12.6f,%s,%s,%3.0f,%3.1f,%6f,%3f,%d,%s,%d,%d\n");  
   }
 
-  boost::algorithm::split(logent, line, boost::is_any_of(","));
+  // boost tokenizer takes almost twice as long... 
+  size_t end = 0; 
+  size_t start = 0;
+  while(end != std::string::npos) {
+    end = line.find(",", start); 
+    logent.push_back(line.substr(start, (end == std::string::npos) ? std::string::npos : end - start));
+    start = end + 1;
+  }
 
+  
   // just in case.  
   initMaps(); 
 
@@ -55,15 +64,15 @@ WSPRLogEntry::WSPRLogEntry(const std::string & line)
   dtime = std::stoul(logent[1]);
   rxcall = boost::algorithm::trim_copy(logent[2]);
   rxgrid = boost::algorithm::trim_copy(logent[3]);
-  boost::algorithm::split(snrvec, logent[4], boost::is_any_of("|"));
-  if(snrvec.size() > 1) {
-    snr = std::stof(snrvec[0]);
-    main_snr = std::stof(snrvec[1]);            
-  }
-  else {
-    snr = std::stof(logent[4]);
-    main_snr = snr; 
-  }
+  // boost::algorithm::split(snrvec, logent[4], boost::is_any_of("|"));
+  // if(snrvec.size() > 1) {
+  //   snr = std::stof(snrvec[0]);
+  //   main_snr = std::stof(snrvec[1]);            
+  // }
+  // else {
+  snr = std::stof(logent[4]);
+  main_snr = snr; 
+
   freq = std::stod(logent[5]);
   txcall = boost::algorithm::trim_copy(logent[6]); 
   txgrid = boost::algorithm::trim_copy(logent[7]);
@@ -132,7 +141,6 @@ std::ostream &  WSPRLogEntry::print(std::ostream & os)
     % ver
     % code
     % freq_diff;
-  
   return os;     
 }
 
