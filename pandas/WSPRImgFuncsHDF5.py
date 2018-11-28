@@ -218,12 +218,14 @@ class WSPRImg:
         For tables where the index is a category, the bin function should return its sole argument. 
         '''
         nrows = self.getDataSetSize(data_set_name)
-        chunksize = 100000
+        chunksize = 500000
         temp = pd.Series([])
 
         for beg in range(0, nrows, chunksize):
             chunk = self.getChunk(data_set_name, beg, chunksize) #self.store.select(key=data_set_name, start=beg, stop=beg+chunksize-1)
             temp = temp.append(binfunc(chunk[column]).value_counts())
+            print("%d\r" % beg, end='')
+            gc.collect()
 
         # now we've got appended value counts... sum the common columns
         res = temp.groupby(temp.index).sum()
