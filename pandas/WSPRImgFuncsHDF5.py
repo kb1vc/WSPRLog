@@ -6,6 +6,8 @@ import io
 import matplotlib.pyplot as plt
 import gc
 
+from functools import lru_cache
+
 
 '''
  Analyze wsprspots logs (prepared by WSPRLog2Pandas)
@@ -40,6 +42,7 @@ def truncInterval(val, min, interval):
     N = np.trunc(Nf)
     return min + N * interval
 
+@lru_cache(maxsize=64)
 def lamInterval(func, min, interval):
     return lambda x : func(x, min, interval)
 
@@ -198,7 +201,8 @@ class WSPRImg:
 
     def getDataSetSize(self, data_set_name):
         return self.store.get_storer(data_set_name).nrows
-    
+
+    @lru_cache(maxsize=16)
     def getChunk(self, data_set_name, beg, length):
         '''
         Get a chunk of (data_set)from the HDF store, filter out reports with the bad lists.
@@ -206,6 +210,7 @@ class WSPRImg:
         chunk = self.store.select(key=data_set_name, start=beg, stop=beg+length-1)
         return chunk[~(chunk.RXCALL.isin(self.bad_rx_calls) | chunk.TXRX.isin(self.bad_txrx_pairs))]
 
+    @lru_cache(maxsize=16)    
     def storeValueCount(self, data_set_name, column, binfunc = identityFunc, sort=True):
         '''
         Read the store in chunks and do a value count. 
@@ -273,6 +278,7 @@ class WSPRImg:
         ax.grid()
         return
 
+    @lru_cache(maxsize=128)
     def genVecNumeric(self, colname, binfunc, fill=True):
         '''
         Compute the probability of an exceptional observation matching 'colname' given
