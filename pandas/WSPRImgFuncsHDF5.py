@@ -64,7 +64,7 @@ class WSPRImg:
         self.bad_txrx_pairs = set()
         self.exp_name = exp_name;
 
-        if (file_list == None) || (use_hdf5_store && os.path.isfile(store_name)):
+        if (file_list == None) or (use_hdf5_store and os.path.isfile(store_name)):
             print("Using HDF5 Store")
             self.store = pd.HDFStore(store_name, mode='r', complib='zlib', complevel=9)
             print("Got here to build exc list")
@@ -272,23 +272,24 @@ class WSPRImg:
 
         if title == '':            
             if comptype == 'COND':
-                title = 'Probability a Report is an Image vs. %s (dataset %s)' % (colname, self.exp_name)
+                title = 'Probability a Report is an Image vs. %s' % colname
             elif comptype == 'NORM':
-                title = 'Probability of a \"Normal\" Report vs. %s (dataset %s)' % (colname, self.exp_name)
+                title = 'Probability of a \"Normal\" Report vs. %s' % colname
             elif comptype == 'IMG':
-                title = 'Probability of an \"Image\" Report vs. %s (dataset %s)' % (colname, self.exp_name)        
-        ax.set_title(title);
+                title = 'Probability of an \"Image\" Report vs. %s' % colname
 
-        vec = self.genVecNumeric(colname, binfunc, True, comptype)
+        fig.suptitle(title, fontsize=14, fontweight='bold')
+        
+        vec, allcount, imgcount = self.genVecNumeric(colname, binfunc, True, comptype)
 
+        ax.set_title("Dataset: %s\nContacts: %d    Image Reports: %d" % (self.exp_name, allcount, imgcount), loc='right')
+        
         yrange = findrange(vec.max(0))
-        print("vec max = %g yrange = %g\n" % (vec.max(0), yrange))
         
         if ylim != '':
             ax.set_ylim(ylim)
         else:
             ax.set_ylim((0, yrange))
-            print("set ylim here vec max = %g yrange = %g\n" % (vec.max(0), yrange))        
 
         return (fig, ax, vec)
         
@@ -305,8 +306,6 @@ class WSPRImg:
                           xlim=(-1000,1000), xticks=np.arange(-1000,1000,500), 
                           xlabel='', ylabel='', title='', ylim='', comptype='COND'):
         fig, ax, vec = self.genGraphCommon(colname, binfunc, xlim, xticks, xlabel, ylabel, title, ylim, comptype)
-        print("genScatterNumeric: vec max = %g\n" % vec.max(0))
-        print(vec.shape)
         ax.scatter(vec.index, vec.values) # xticks=xticks, xlim=xlim)
         ax.grid()
         return fig
@@ -321,21 +320,19 @@ class WSPRImg:
         such that K[x] is the probability that an animal is a goat given that the weight is X pounds.
         '''
         res = pd.Series([])
-        
+
+        f1_hv = self.storeValueCount('norm', colname, binfunc, sort=False)
+        f2_hv = self.storeValueCount('img', colname, binfunc, sort=False)
         if comptype == 'COND':
-            f1_hv = self.storeValueCount('norm', colname, binfunc, sort=False)
-            f2_hv = self.storeValueCount('img', colname, binfunc, sort=False)
             res = f2_hv / f1_hv
             if fill:
                 res.fillna(0, inplace=True)
         else:
             if comptype == 'NORM':                
-                res = self.storeValueCount('norm', colname, binfunc, sort=False)            
-
+                res = f1_hv
             elif comptype == 'IMG':
-                res = self.storeValueCount('img', colname, binfunc, sort=False)            
-
+                res = f2_hv
             res = res.sort_index(ascending=True) / res.sum(0)            
 
-        return res
+        return (res, f1_hv.sum(), f2_hv.sum())
 
