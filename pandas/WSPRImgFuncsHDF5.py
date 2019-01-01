@@ -5,9 +5,9 @@ import subprocess
 import io
 import matplotlib.pyplot as plt
 import gc
+import os
 
 from functools import lru_cache
-
 
 '''
  Analyze wsprspots logs (prepared by WSPRLog2Pandas)
@@ -19,6 +19,15 @@ from functools import lru_cache
 # utility functions
 def absRangeMask(ser, min, max):
     return (abs(ser) < min) | (abs(ser) > max)
+
+def findrange(v):
+    for expd in range(-16,16):
+        for mant in [1, 2, 5]:
+            lim = mant * (10 ** expd)
+            #print("test v = %g  lim = %g\n" % (v, lim))
+            if v < lim:
+                return lim
+    return v
 
 # numeric filter functions
 def identityFunc(v):
@@ -48,13 +57,15 @@ def lamInterval(func, min, interval):
 
 
 class WSPRImg:
-    def __init__(self, store_name, file_list=None):
+    def __init__(self, store_name, file_list=None, exp_name='', use_hdf5_store=False):
         # init these sets as empty -- they're used as filters
         # in the get chunks method. 
         self.bad_rx_calls = set()
         self.bad_txrx_pairs = set()
+        self.exp_name = exp_name;
 
-        if file_list == None:
+        if (file_list == None) || (use_hdf5_store && os.path.isfile(store_name)):
+            print("Using HDF5 Store")
             self.store = pd.HDFStore(store_name, mode='r', complib='zlib', complevel=9)
             print("Got here to build exc list")
             self.buildExclusionLists()
@@ -132,7 +143,7 @@ class WSPRImg:
                 del chunk2
                 del img_chunk
                 
-                print("%d\r" % rcount, end='')
+                print("%d\n" % rcount, end='')
                 rcount = rcount + csize
                 gc.collect()
                 
@@ -229,7 +240,7 @@ class WSPRImg:
         for beg in range(0, nrows, chunksize):
             chunk = self.getChunk(data_set_name, beg, chunksize) #self.store.select(key=data_set_name, start=beg, stop=beg+chunksize-1)
             temp = temp.append(binfunc(chunk[column]).value_counts())
-            print("%d\r" % beg, end='')
+            print("%d\n" % beg, end='')
             gc.collect()
 
         # now we've got appended value counts... sum the common columns
@@ -242,44 +253,66 @@ class WSPRImg:
             return res
 
 
-    def genPlotNumeric(self, colname, binfunc=np.trunc,
-                       xlim=(-1000,1000), xticks=np.arange(-1000,1000,500), 
-                       xlabel='', ylabel='', title='', ylim=''):
+    def genGraphCommon(self, colname, binfunc, xlim, xticks, xlabel, ylabel, title, ylim, comptype):
+        '''
+        Common graph operations for all plot generation. 
+
+        Data can be either conditional (probability of an X given a Y with column value C 
+        comptype = COMP)
+        or PDF of X vs. column value C in dataset D  (comptype is IMG or NORM)
+        '''
         fig, ax = plt.subplots()
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
+        ax.set_xticks(xticks);
+        
+        
+        if xlim != '':
+            ax.set_xlim(xlim)
+
+        if title == '':            
+            if comptype == 'COND':
+                title = 'Probability a Report is an Image vs. %s (dataset %s)' % (colname, self.exp_name)
+            elif comptype == 'NORM':
+                title = 'Probability of a \"Normal\" Report vs. %s (dataset %s)' % (colname, self.exp_name)
+            elif comptype == 'IMG':
+                title = 'Probability of an \"Image\" Report vs. %s (dataset %s)' % (colname, self.exp_name)        
+        ax.set_title(title);
+
+        vec = self.genVecNumeric(colname, binfunc, True, comptype)
+
+        yrange = findrange(vec.max(0))
+        print("vec max = %g yrange = %g\n" % (vec.max(0), yrange))
+        
         if ylim != '':
             ax.set_ylim(ylim)
-        if title == '':
-            title = 'Probability a Report is an Image vs. %s' % colname
-        ax.set_title(title)
-        e_vs_n = self.genVecNumeric(colname, binfunc)
-        e_vs_n.plot(grid=True, xticks=xticks, xlim=xlim, ax=ax)
-        return
+        else:
+            ax.set_ylim((0, yrange))
+            print("set ylim here vec max = %g yrange = %g\n" % (vec.max(0), yrange))        
+
+        return (fig, ax, vec)
+        
+    def genPlotNumeric(self, colname, binfunc=np.trunc,
+                       xlim=(-1000,1000), xticks=np.arange(-1000,1000,500), 
+                       xlabel='', ylabel='', title='', ylim='', comptype='COND'):
+        fig, ax, vec = self.genGraphCommon(colname, binfunc, xlim, xticks, xlabel, ylabel, title, ylim, comptype)
+        #vec.plot(grid=True, xticks=xticks, xlim=xlim, ax=ax)
+        vec.plot(grid=True, ax=ax)        
+        return fig
 
 
     def genScatterNumeric(self, colname, binfunc=np.trunc,
                           xlim=(-1000,1000), xticks=np.arange(-1000,1000,500), 
-                          xlabel='', ylabel='', title='', ylim=''):
-        fig, ax = plt.subplots()
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
-        if ylim != '':
-            ax.set_ylim(ylim)
-        if title == '':
-            title = 'Probability a Report is an Image vs. %s' % colname
-        ax.set_title(title)
-        ax.set_xticks(xticks)
-        if xlim != '':
-            ax.set_xlim(xlim)
-    
-        e_vs_n = self.genVecNumeric(colname, binfunc, fill=False)
-        ax.scatter(e_vs_n.index, e_vs_n.values) # xticks=xticks, xlim=xlim)
+                          xlabel='', ylabel='', title='', ylim='', comptype='COND'):
+        fig, ax, vec = self.genGraphCommon(colname, binfunc, xlim, xticks, xlabel, ylabel, title, ylim, comptype)
+        print("genScatterNumeric: vec max = %g\n" % vec.max(0))
+        print(vec.shape)
+        ax.scatter(vec.index, vec.values) # xticks=xticks, xlim=xlim)
         ax.grid()
-        return
+        return fig
 
     @lru_cache(maxsize=128)
-    def genVecNumeric(self, colname, binfunc, fill=True):
+    def genVecNumeric(self, colname, binfunc, fill=True, comptype='COND'):
         '''
         Compute the probability of an exceptional observation matching 'colname' given
         the occurance of a normal observation. 
@@ -287,11 +320,22 @@ class WSPRImg:
         For instance genVecNumeric(farm_animals, goats, 'weight_in_pounds', np.rint) will return a vector K
         such that K[x] is the probability that an animal is a goat given that the weight is X pounds.
         '''
-        f1_hv = self.storeValueCount('norm', colname, binfunc, sort=False)
-        f2_hv = self.storeValueCount('img', colname, binfunc, sort=False)
-        f2_vs_f1 = f2_hv / f1_hv
-        if fill:
-            f2_vs_f1.fillna(0, inplace=True)
-    
-        return f2_vs_f1
+        res = pd.Series([])
+        
+        if comptype == 'COND':
+            f1_hv = self.storeValueCount('norm', colname, binfunc, sort=False)
+            f2_hv = self.storeValueCount('img', colname, binfunc, sort=False)
+            res = f2_hv / f1_hv
+            if fill:
+                res.fillna(0, inplace=True)
+        else:
+            if comptype == 'NORM':                
+                res = self.storeValueCount('norm', colname, binfunc, sort=False)            
+
+            elif comptype == 'IMG':
+                res = self.storeValueCount('img', colname, binfunc, sort=False)            
+
+            res = res.sort_index(ascending=True) / res.sum(0)            
+
+        return res
 
