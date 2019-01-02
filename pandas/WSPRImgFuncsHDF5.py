@@ -6,6 +6,7 @@ import io
 import matplotlib.pyplot as plt
 import gc
 import os
+from scipy.stats import ks_2samp
 
 from functools import lru_cache
 
@@ -302,6 +303,15 @@ class WSPRImg:
         return fig
 
 
+    def genEDFNumeric(self, colname, binfunc=np.trunc,
+                      xlim=(-1000,1000), xticks=np.arange(-1000,1000,500), 
+                      xlabel='', ylabel='', title='', ylim='', comptype='COND'):
+        fig, ax, vec = self.genGraphCommon(colname, binfunc, xlim, xticks, xlabel, ylabel, title, (0,1), comptype)
+        ax.grid()
+        vec.cumsum().plot(drawstyle='steps') #r(vec.index, vec.values) # xticks=xticks, xlim=xlim)        
+        return fig
+    
+
     def genScatterNumeric(self, colname, binfunc=np.trunc,
                           xlim=(-1000,1000), xticks=np.arange(-1000,1000,500), 
                           xlabel='', ylabel='', title='', ylim='', comptype='COND'):
@@ -310,6 +320,27 @@ class WSPRImg:
         ax.grid()
         return fig
 
+    @lru_cache(maxsize=128)
+    def testKS(self, colname, binfunc):
+        '''
+        Does the dataset suggest that the img EDF and the "norm" EDF represent
+        the same distribution?  If the p value is small, then the two distributions
+        do not match. 
+
+        if the p-value is high, then we cannot reject the null hypothesis (that the 
+        two samples are the same). 
+        '''
+        # collect the two vectors
+        img_vc = self.storeValueCount('img', colname, binfunc, sort=False)
+        norm_vc = self.storeValueCount('norm', colname, binfunc, sort=False)
+        
+        # img_vcs = (img_vc.groupby(img_vc.index).sum().cumsum()) / sum(img_vc)
+        # norm_vcs = (norm_vc.groupby(norm_vc.index).sum().cumsum()) / sum(norm_vc)        
+        img_vcs = (img_vc.groupby(img_vc.index).sum().cumsum())
+        norm_vcs = (norm_vc.groupby(norm_vc.index).sum().cumsum())
+
+        return (ks_2samp(img_vcs, norm_vcs), norm_vcs / norm_vcs.iloc[-1], img_vcs / img_vcs.iloc[-1])
+    
     @lru_cache(maxsize=128)
     def genVecNumeric(self, colname, binfunc, fill=True, comptype='COND'):
         '''
