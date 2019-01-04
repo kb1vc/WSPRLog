@@ -211,6 +211,11 @@ class WSPRImg:
         self.bad_rx_calls = set(tmp_rx_counts[tmp_rx_counts > 4].index.to_series().unique())
         self.bad_txrx_pairs = set(tmp_txrx_counts[tmp_txrx_counts > 3].index.to_series().unique())
 
+    def badFreqDiff(self, fdiff):
+        m50 = fdiff % 50
+        m60 = fdiff % 60
+        return (fdiff != 0) & ((m50 > 47) | (m50 < 3) | (m60 > 57) | (m60 < 3))
+    
     def getDataSetSize(self, data_set_name):
         return self.store.get_storer(data_set_name).nrows
 
@@ -220,7 +225,7 @@ class WSPRImg:
         Get a chunk of (data_set)from the HDF store, filter out reports with the bad lists.
         '''
         chunk = self.store.select(key=data_set_name, start=beg, stop=beg+length-1)
-        return chunk[~(chunk.RXCALL.isin(self.bad_rx_calls) | chunk.TXRX.isin(self.bad_txrx_pairs))]
+        return chunk[~(chunk.RXCALL.isin(self.bad_rx_calls) | chunk.TXRX.isin(self.bad_txrx_pairs) | self.badFreqDiff(chunk.FREQDIFF))]
 
     @lru_cache(maxsize=16)    
     def storeValueCount(self, data_set_name, column, binfunc = identityFunc, sort=True):
@@ -239,6 +244,8 @@ class WSPRImg:
         temp = pd.Series([])
 
         for beg in range(0, nrows, chunksize):
+            # we use getChunk as a filter so that we can eliminate "bad" records, like problem RX stations,
+            # or frequency differences that are multiples of 50 or 60 Hz. 
             chunk = self.getChunk(data_set_name, beg, chunksize) #self.store.select(key=data_set_name, start=beg, stop=beg+chunksize-1)
             temp = temp.append(binfunc(chunk[column]).value_counts())
             print("%d\n" % beg, end='')
